@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>儿童运动天赋评估调查表</title>
+  <meta name="description" content="移动端调查表 | 儿童运动天赋评估 | 游泳专项支持" />
+  <!-- 如果没有 icon.png 可以删掉这行 -->
+  <!-- <link rel="icon" href="./assets/icon.png" /> -->
+  <link rel="stylesheet" href="./themes/cartoon.css" />
+</head>
+<body>
+<header class="app-header">
+  <h1>儿童运动天赋评估调查表</h1>
+  <div class="step-indicator">
+    <span id="step-label">步骤 1 / 7 · 基本信息</span>
+    <span id="autosave-label" aria-live="polite"></span>
+  </div>
+  <div class="progress"><div id="progress-bar"></div></div>
+</header>
+
+  <main id="form-root">
+    <form id="survey-form" novalidate>
+      <!-- Step 1: 基本信息 -->
+      <section class="step" data-step="1" aria-labelledby="s1-title">
+        <h2 id="s1-title">基本信息</h2>
+
+        <div class="card">
+          <h3>儿童信息</h3>
+          <div class="grid">
+            <label>姓名
+              <input name="child.name" type="text" required placeholder="请输入姓名" />
+            </label>
+            <fieldset class="inline">
+              <legend>性别</legend>
+              <label><input type="radio" name="child.gender" value="男" required /> 男</label>
+              <label><input type="radio" name="child.gender" value="女" /> 女</label>
+            </fieldset>
+            <label>出生日期
+              <input name="child.dob" type="date" required />
+            </label>
+            <label>现有身高（cm）
+              <input name="child.height" type="number" inputmode="decimal" min="30" max="250" placeholder="例如 110" />
+            </label>
+            <label>现有体重（kg）
+              <input name="child.weight" type="number" inputmode="decimal" min="5" max="200" placeholder="例如 18.5" />
+            </label>
+            <fieldset>
+              <legend>目前就读</legend>
+              <label><input type="radio" name="child.grade" value="幼儿园小班" /> 幼儿园小班</label>
+              <label><input type="radio" name="child.grade" value="幼儿园中班" /> 幼儿园中班</label>
+              <label><input type="radio" name="child.grade" value="幼儿园大班" /> 幼儿园大班</label>
+              <label class="with-input">
+                <input type="radio" name="child.grade" value="其他" />
+                其他 <input name="child.grade_other" type="text" placeholder="填写其他" />
+              </label>
+            </fieldset>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>父母信息</h3>
+          <details open>
+            <summary>父亲</summary>
+            <div class="grid">
+              <label>身高（cm）
+                <input name="father.height" type="number" min="100" max="250" inputmode="decimal" />
+              </label>
+              <fieldset>
+                <legend>运动经历</legend>
+                <label><input type="radio" name="father.exp" value="专业运动员" /> 专业运动员</label>
+                <label><input type="radio" name="father.exp" value="业余爱好者" /> 业余爱好者</label>
+                <label><input type="radio" name="father.exp" value="较少运动" /> 较少运动</label>
+              </fieldset>
+              <label>擅长运动项目
+                <input name="father.sport" type="text" placeholder="例如：篮球、游泳…" />
+              </label>
+              <label>职业
+                <input name="father.job" type="text" />
+              </label>
+
+              <fieldset>
+                <legend>父亲运动潜质自评（多选）</legend>
+                <div class="checkbox-grid" data-name="father.traits">
+                  <label><input type="checkbox" value="爆发力好" />爆发力好</label>
+                  <label><input type="checkbox" value="耐力出众" />耐力出众</label>
+                  <label><input type="checkbox" value="协调性强" />协调性强</label>
+                  <label><input type="checkbox" value="平衡感好" />平衡感好</label>
+                  <label><input type="checkbox" value="反应速度快" />反应速度快</label>
+                  <label><input type="checkbox" value="柔韧性好" />柔韧性好</label>
+                  <label><input type="checkbox" value="肌肉力量强" />肌肉力量强</label>
+                  <label><input type="checkbox" value="身体恢复快" />身体恢复快</label>
+                  <label><input type="checkbox" value="学习动作快" />学习动作快</label>
+                </div>
+                <label class="stack">
+                  其他
+                  <input name="father.traits_other" type="text" />
+                </label>
+              </fieldset>
+
+              <label>可能适合但未系统训练的项目
+                <input name="father.hidden_sport" type="text" />
+              </label>
+              <label>具体表现或例子
+                <textarea name="father.examples" rows="3" placeholder="举例说明潜质的具体表现"></textarea>
+              </label>
+            </div>
+          </details>
+
+          <details>
+            <summary>母亲</summary>
+            <div class="grid">
+              <label>身高（cm）
+                <input name="mother.height" type="number" min="100" max="250" inputmode="decimal" />
+              </label>
+              <fieldset>
+                <legend>运动经历</legend>
+                <label><input type="radio" name="mother.exp" value="专业运动员" /> 专业运动员</label>
+                <label><input type="radio" name="mother.exp" value="业余爱好者" /> 业余爱好者</label>
+                <label><input type="radio" name="mother.exp" value="较少运动" /> 较少运动</label>
+              </fieldset>
+              <label>擅长运动项目
+                <input name="mother.sport" type="text" />
+              </label>
+              <label>职业
+                <input name="mother.job" type="text" />
+              </label>
+
+              <fieldset>
+                <legend>母亲运动潜质自评（多选）</legend>
+                <div class="checkbox-grid" data-name="mother.traits">
+                  <label><input type="checkbox" value="爆发力好" />爆发力好</label>
+                  <label><input type="checkbox" value="耐力出众" />耐力出众</label>
+                  <label><input type="checkbox" value="协调性强" />协调性强</label>
+                  <label><input type="checkbox" value="平衡感好" />平衡感好</label>
+                  <label><input type="checkbox" value="反应速度快" />反应速度快</label>
+                  <label><input type="checkbox" value="柔韧性好" />柔韧性好</label>
+                  <label><input type="checkbox" value="肌肉力量强" />肌肉力量强</label>
+                  <label><input type="checkbox" value="身体恢复快" />身体恢复快</label>
+                  <label><input type="checkbox" value="学习动作快" />学习动作快</label>
+                </div>
+                <label class="stack">
+                  其他
+                  <input name="mother.traits_other" type="text" />
+                </label>
+              </fieldset>
+
+              <label>可能适合但未系统训练的项目
+                <input name="mother.hidden_sport" type="text" />
+              </label>
+              <label>具体表现或例子
+                <textarea name="mother.examples" rows="3"></textarea>
+              </label>
+            </div>
+          </details>
+        </div>
+
+        <div class="card">
+          <h3>祖辈信息</h3>
+          <div class="grid ancestors">
+            <fieldset>
+              <legend>爷爷</legend>
+              <label>身高（cm）<input name="grandpa.height" type="number" /></label>
+              <label>运动爱好<input name="grandpa.hobby" type="text" /></label>
+              <label>运动相关经历<input name="grandpa.exp" type="text" /></label>
+            </fieldset>
+            <fieldset>
+              <legend>奶奶</legend>
+              <label>身高（cm）<input name="grandma.height" type="number" /></label>
+              <label>运动爱好<input name="grandma.hobby" type="text" /></label>
+              <label>运动相关经历<input name="grandma.exp" type="text" /></label>
+            </fieldset>
+            <fieldset>
+              <legend>外公</legend>
+              <label>身高（cm）<input name="wgrandpa.height" type="number" /></label>
+              <label>运动爱好<input name="wgrandpa.hobby" type="text" /></label>
+              <label>运动相关经历<input name="wgrandpa.exp" type="text" /></label>
+            </fieldset>
+            <fieldset>
+              <legend>外婆</legend>
+              <label>身高（cm）<input name="wgrandma.height" type="number" /></label>
+              <label>运动爱好<input name="wgrandma.hobby" type="text" /></label>
+              <label>运动相关经历<input name="wgrandma.exp" type="text" /></label>
+            </fieldset>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: 运动发展状况 -->
+      <section class="step" data-step="2" aria-labelledby="s2-title" hidden>
+        <h2 id="s2-title">运动发展状况</h2>
+
+        <div class="card">
+          <h3>运动基础情况</h3>
+          <label>是否参加过任何运动培训？
+            <select name="dev.training">
+              <option value="">请选择</option>
+              <option>是</option>
+              <option>否</option>
+            </select>
+          </label>
+          <label class="stack">如是，请说明项目和时长
+            <input name="dev.training_desc" type="text" placeholder="如：游泳 6 个月；体操 10 次" />
+          </label>
+
+          <fieldset>
+            <legend>每周进行户外活动/运动频率</legend>
+            <label><input type="radio" name="dev.freq" value="几乎不运动" /> 几乎不运动</label>
+            <label><input type="radio" name="dev.freq" value="1-2次" /> 1-2次</label>
+            <label><input type="radio" name="dev.freq" value="3-4次" /> 3-4次</label>
+            <label><input type="radio" name="dev.freq" value="5次以上" /> 5次以上</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>最感兴趣的运动项目（可多选）</legend>
+            <div class="checkbox-grid" data-name="dev.interests">
+              <label><input type="checkbox" value="游泳" />游泳</label>
+              <label class="stack">
+                <span>球类运动</span>
+                <div class="checkbox-inline">
+                  <label><input type="checkbox" value="篮球" data-group="ball" /> 篮球</label>
+                  <label><input type="checkbox" value="足球" data-group="ball" /> 足球</label>
+                  <label><input type="checkbox" value="网球" data-group="ball" /> 网球</label>
+                  <label><input type="checkbox" value="羽毛球" data-group="ball" /> 羽毛球</label>
+                  <label class="with-input">
+                    <input type="checkbox" value="其他球类" data-group="ball" />
+                    其他<input name="dev.ball_other" type="text" placeholder="其他球类" />
+                  </label>
+                </div>
+              </label>
+              <label><input type="checkbox" value="田径项目" />田径项目</label>
+              <label><input type="checkbox" value="体操/舞蹈" />体操/舞蹈</label>
+              <label><input type="checkbox" value="冰雪运动" />冰雪运动</label>
+              <label class="with-input">
+                <input type="checkbox" value="其他" />
+                其他<input name="dev.interests_other" type="text" />
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>现有运动技能评估（家长自评）</legend>
+            <div class="skills-grid">
+              <div>跑：
+                <label><input type="radio" name="skills.run" value="优秀" />优秀</label>
+                <label><input type="radio" name="skills.run" value="良好" />良好</label>
+                <label><input type="radio" name="skills.run" value="一般" />一般</label>
+                <label><input type="radio" name="skills.run" value="较弱" />较弱</label>
+              </div>
+              <div>跳：
+                <label><input type="radio" name="skills.jump" value="优秀" />优秀</label>
+                <label><input type="radio" name="skills.jump" value="良好" />良好</label>
+                <label><input type="radio" name="skills.jump" value="一般" />一般</label>
+                <label><input type="radio" name="skills.jump" value="较弱" />较弱</label>
+              </div>
+              <div>投掷：
+                <label><input type="radio" name="skills.throw" value="优秀" />优秀</label>
+                <label><input type="radio" name="skills.throw" value="良好" />良好</label>
+                <label><input type="radio" name="skills.throw" value="一般" />一般</label>
+                <label><input type="radio" name="skills.throw" value="较弱" />较弱</label>
+              </div>
+              <div>攀爬：
+                <label><input type="radio" name="skills.climb" value="优秀" />优秀</label>
+                <label><input type="radio" name="skills.climb" value="良好" />良好</label>
+                <label><input type="radio" name="skills.climb" value="一般" />一般</label>
+                <label><input type="radio" name="skills.climb" value="较弱" />较弱</label>
+              </div>
+              <div>平衡：
+                <label><input type="radio" name="skills.balance" value="优秀" />优秀</label>
+                <label><input type="radio" name="skills.balance" value="良好" />良好</label>
+                <label><input type="radio" name="skills.balance" value="一般" />一般</label>
+                <label><input type="radio" name="skills.balance" value="较弱" />较弱</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="card">
+          <h3>水上运动体验与能力</h3>
+          <label>是否接触过游泳？
+            <select name="swim.touch">
+              <option value="">请选择</option>
+              <option>是</option>
+              <option>否</option>
+            </select>
+          </label>
+          <label>开始接触游泳的年龄（岁）
+            <input name="swim.start_age" type="number" min="0" max="15" step="0.5" />
+          </label>
+
+          <fieldset>
+            <legend>对水的态度</legend>
+            <label><input type="radio" name="swim.attitude" value="非常喜欢，主动要求下水" />非常喜欢，主动要求下水</label>
+            <label><input type="radio" name="swim.attitude" value="比较喜欢，不排斥下水" />比较喜欢，不排斥下水</label>
+            <label><input type="radio" name="swim.attitude" value="一般，无明显喜好" />一般，无明显喜好</label>
+            <label><input type="radio" name="swim.attitude" value="有点害怕，需要鼓励才能下水" />有点害怕，需要鼓励</label>
+            <label><input type="radio" name="swim.attitude" value="非常害怕，拒绝接触水" />非常害怕，拒绝接触水</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>已掌握的水中技能（可多选）</legend>
+            <div class="checkbox-grid" data-name="swim.skills">
+              <label class="with-input">
+                <input type="checkbox" value="水中憋气" />
+                水中憋气（秒）<input name="swim.hold_breath_sec" type="number" min="0" />
+              </label>
+              <label><input type="checkbox" value="水中睁眼" />水中睁眼</label>
+              <label class="with-input">
+                <input type="checkbox" value="水中漂浮" />
+                水中漂浮（秒）<input name="swim.float_sec" type="number" min="0" />
+              </label>
+              <label><input type="checkbox" value="打水/蹬腿" />打水/蹬腿</label>
+              <label><input type="checkbox" value="自由泳" />自由泳</label>
+              <label><input type="checkbox" value="蛙泳" />蛙泳</label>
+              <label><input type="checkbox" value="仰泳" />仰泳</label>
+              <label><input type="checkbox" value="蝶泳" />蝶泳</label>
+              <label><input type="checkbox" value="跳水入水" />跳水入水</label>
+              <label class="with-input">
+                <input type="checkbox" value="其他" />
+                其他<input name="swim.other" type="text" />
+              </label>
+              <label><input type="checkbox" value="暂无" />暂无</label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>游泳学习情况</legend>
+            <label><input type="radio" name="swim.learn" value="未学习" />未学习</label>
+            <label><input type="radio" name="swim.learn" value="家长教导" />家长教导</label>
+            <label class="with-input">
+              <input type="radio" name="swim.learn" value="参加过课程" />
+              参加过<span class="inline-text"> 次 </span>
+              <input name="swim.course_times" type="number" min="0" />
+            </label>
+            <label class="with-input">
+              <input type="radio" name="swim.learn" value="系统学习" />
+              系统学习 <input name="swim.learn_duration" type="text" placeholder="如：6月/1年" />
+            </label>
+          </fieldset>
+        </div>
+      </section>
+
+      <!-- Step 3: 身体状况 -->
+      <section class="step" data-step="3" aria-labelledby="s3-title" hidden>
+        <h2 id="s3-title">身体状况</h2>
+        <div class="card">
+          <label>是否有影响运动的特殊体质或疾病？
+            <select name="health.special">
+              <option value="">请选择</option>
+              <option>是</option>
+              <option>否</option>
+            </select>
+          </label>
+          <label class="stack">如有，请说明
+            <textarea name="health.special_desc" rows="2"></textarea>
+          </label>
+
+          <label>近一年是否做过体检？
+            <select name="health.checkup">
+              <option value="">请选择</option>
+              <option>是</option>
+              <option>否</option>
+            </select>
+          </label>
+          <label class="stack">如是，有无特殊发现
+            <textarea name="health.findings" rows="2"></textarea>
+          </label>
+
+          <fieldset>
+            <legend>是否有以下可能影响游泳的情况（可多选）</legend>
+            <div class="checkbox-grid" data-name="health.swim_concerns">
+              <label class="with-input">
+                <input type="checkbox" value="近视" />
+                近视（度数）<input name="health.myopia" type="number" step="50" />
+              </label>
+              <label><input type="checkbox" value="哮喘或呼吸系统问题" />哮喘或呼吸系统问题</label>
+              <label><input type="checkbox" value="心脏相关情况" />心脏相关情况</label>
+              <label><input type="checkbox" value="皮肤过敏（氯敏感）" />皮肤过敏（氯敏感）</label>
+              <label><input type="checkbox" value="耳部问题" />耳部问题</label>
+              <label><input type="checkbox" value="骨骼/关节问题" />骨骼/关节问题</label>
+              <label><input type="checkbox" value="运动损伤史" />运动损伤史</label>
+              <label class="with-input">
+                <input type="checkbox" value="其他" />
+                其他<input name="health.other" type="text" />
+              </label>
+              <label><input type="checkbox" value="无" />无</label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>体型评估</legend>
+            <label><input type="radio" name="health.shape" value="偏瘦" />偏瘦</label>
+            <label><input type="radio" name="health.shape" value="标准" />标准</label>
+            <label><input type="radio" name="health.shape" value="偏壮" />偏壮</label>
+            <label class="with-input">
+              <input type="radio" name="health.shape" value="其他" />
+              其他<input name="health.shape_other" type="text" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>当前运动表现中的优势</legend>
+            <div class="checkbox-grid" data-name="health.strengths">
+              <label><input type="checkbox" value="速度" />速度</label>
+              <label><input type="checkbox" value="耐力" />耐力</label>
+              <label><input type="checkbox" value="力量" />力量</label>
+              <label><input type="checkbox" value="柔韧性" />柔韧性</label>
+              <label><input type="checkbox" value="协调性" />协调性</label>
+              <label><input type="checkbox" value="平衡感" />平衡感</label>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <!-- Step 4: 运动发展规划 -->
+      <section class="step" data-step="4" aria-labelledby="s4-title" hidden>
+        <h2 id="s4-title">运动发展规划</h2>
+        <div class="card">
+          <fieldset>
+            <legend>参加游泳训练的主要目的（可多选）</legend>
+            <div class="checkbox-grid" data-name="plan.purposes">
+              <label><input type="checkbox" value="增强体质/健康需求" />增强体质/健康需求</label>
+              <label><input type="checkbox" value="培养运动兴趣" />培养运动兴趣</label>
+              <label><input type="checkbox" value="奠定专业基础" />奠定专业基础</label>
+              <label><input type="checkbox" value="升学规划（体育特长生）" />升学规划（体育特长生）</label>
+              <label><input type="checkbox" value="水上安全教育" />水上安全教育</label>
+              <label class="with-input"><input type="checkbox" value="其他" />其他<input name="plan.purpose_other" type="text" /></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>对未来运动发展的期望</legend>
+            <label><input type="radio" name="plan.expect" value="业余爱好（健身为主）" />业余爱好（健身为主）</label>
+            <label><input type="radio" name="plan.expect" value="体教结合（运动与学业平衡）" />体教结合（运动与学业平衡）</label>
+            <label><input type="radio" name="plan.expect" value="专业发展方向（体校/专业队）" />专业发展方向（体校/专业队）</label>
+            <label><input type="radio" name="plan.expect" value="国际化培养路径" />国际化培养路径</label>
+            <label class="with-input"><input type="radio" name="plan.expect" value="其他" />其他<input name="plan.expect_other" type="text" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>能够投入的训练时间</legend>
+            <div class="checkbox-grid" data-name="plan.time">
+              <label><input type="checkbox" value="每周1-2次" />每周1-2次</label>
+              <label><input type="checkbox" value="每周3-4次" />每周3-4次</label>
+              <label><input type="checkbox" value="每周5次以上" />每周5次以上</label>
+              <label><input type="checkbox" value="寒暑假可增加训练量" />寒暑假可增加训练量</label>
+              <label class="with-input"><input type="checkbox" value="其他" />其他<input name="plan.time_other" type="text" /></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>家庭支持条件</legend>
+            <div class="grid">
+              <div>
+                <label class="label">交通便利性</label>
+                <label><input type="radio" name="support.traffic" value="方便" />方便</label>
+                <label><input type="radio" name="support.traffic" value="一般" />一般</label>
+                <label><input type="radio" name="support.traffic" value="不便" />不便</label>
+              </div>
+              <div>
+                <label class="label">经济投入</label>
+                <label><input type="radio" name="support.budget" value="充足" />充足</label>
+                <label><input type="radio" name="support.budget" value="一般" />一般</label>
+                <label><input type="radio" name="support.budget" value="有限" />有限</label>
+              </div>
+              <div>
+                <label class="label">家长陪伴时间</label>
+                <label><input type="radio" name="support.time" value="充足" />充足</label>
+                <label><input type="radio" name="support.time" value="一般" />一般</label>
+                <label><input type="radio" name="support.time" value="有限" />有限</label>
+              </div>
+              <div>
+                <label class="label">家庭运动氛围</label>
+                <label><input type="radio" name="support.atmosphere" value="浓厚" />浓厚</label>
+                <label><input type="radio" name="support.atmosphere" value="一般" />一般</label>
+                <label><input type="radio" name="support.atmosphere" value="较少" />较少</label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <!-- Step 5: 儿童运动潜质观察 -->
+      <section class="step" data-step="5" aria-labelledby="s5-title" hidden>
+        <h2 id="s5-title">儿童运动潜质观察</h2>
+        <div class="card">
+          <fieldset>
+            <legend>孩子在哪些运动方面表现突出？（可多选）</legend>
+            <div class="checkbox-grid" data-name="observe.highlights">
+              <label><input type="checkbox" value="速度型能力" />速度型能力</label>
+              <label><input type="checkbox" value="力量型表现" />力量型表现</label>
+              <label><input type="checkbox" value="耐力表现" />耐力表现</label>
+              <label><input type="checkbox" value="协调性" />协调性</label>
+              <label><input type="checkbox" value="平衡能力" />平衡能力</label>
+              <label><input type="checkbox" value="柔韧度" />柔韧度</label>
+              <label><input type="checkbox" value="空间感" />空间感</label>
+              <label><input type="checkbox" value="节奏感" />节奏感</label>
+              <label><input type="checkbox" value="运动学习能力" />运动学习能力</label>
+              <label><input type="checkbox" value="水中适应能力" />水中适应能力</label>
+              <label class="with-input"><input type="checkbox" value="其他" />其他<input name="observe.other" type="text" /></label>
+            </div>
+          </fieldset>
+
+          <label class="stack">具体表现例子
+            <textarea name="observe.examples" rows="3" placeholder="举例如：跑30米速度快；水中能自然漂浮10秒…"></textarea>
+          </label>
+
+          <label class="stack">注意到但可能被忽视的运动相关潜质
+            <textarea name="observe.ignored" rows="3"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <!-- Step 6: 运动心理与行为特征 -->
+      <section class="step" data-step="6" aria-labelledby="s6-title" hidden>
+        <h2 id="s6-title">运动心理与行为特征</h2>
+        <div class="card">
+          <fieldset>
+            <legend>运动相关性格特点</legend>
+            <div class="checkbox-grid" data-name="psych.traits">
+              <label><input type="checkbox" value="活泼好动，精力充沛" />活泼好动，精力充沛</label>
+              <label><input type="checkbox" value="安静内敛，但运动专注" />安静内敛，但运动专注</label>
+              <label><input type="checkbox" value="有竞争意识，挑战性强" />有竞争意识，挑战性强</label>
+              <label><input type="checkbox" value="坚持性好，不易放弃" />坚持性好，不易放弃</label>
+              <label><input type="checkbox" value="适应性强，学习新动作快" />适应性强，学习新动作快</label>
+              <label><input type="checkbox" value="注意力集中，执行指令好" />注意力集中，执行指令好</label>
+              <label class="with-input"><input type="checkbox" value="其他" />其他<input name="psych.other" type="text" /></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>面对困难/挫折的反应</legend>
+            <label><input type="radio" name="psych.response" value="积极面对，主动尝试" />积极面对，主动尝试</label>
+            <label><input type="radio" name="psych.response" value="需要鼓励后继续尝试" />需要鼓励后继续尝试</label>
+            <label><input type="radio" name="psych.response" value="容易放弃，需要较多引导" />容易放弃，需要较多引导</label>
+            <label class="with-input"><input type="radio" name="psych.response" value="其他" />其他<input name="psych.response_other" type="text" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>团队合作倾向</legend>
+            <label><input type="radio" name="psych.team" value="喜欢团队活动" />喜欢团队活动</label>
+            <label><input type="radio" name="psych.team" value="更喜欢个人项目" />更喜欢个人项目</label>
+            <label><input type="radio" name="psych.team" value="两者都适应" />两者都适应</label>
+          </fieldset>
+
+          <label class="stack">特别需要说明的情况
+            <textarea name="psych.notes" rows="3"></textarea>
+          </label>
+        </div>
+      </section>
+
+      <!-- Step 7: 填写人信息 & 提交 -->
+      <section class="step" data-step="7" aria-labelledby="s7-title" hidden>
+        <h2 id="s7-title">提交</h2>
+        <div class="card">
+          <div class="grid">
+            <label>填写人姓名
+              <input name="filler.name" type="text" required />
+            </label>
+            <label>与儿童关系
+              <input name="filler.relation" type="text" required placeholder="如：父亲/母亲/监护人" />
+            </label>
+            <label>联系电话
+              <input name="filler.phone" type="tel" required pattern="^1[3-9]\\d{9}$" placeholder="手机号" />
+            </label>
+            <label>填写日期
+              <input name="filler.date" type="date" />
+            </label>
+          </div>
+
+          <p class="privacy">
+            * 注：本调查表信息仅用于专业运动天赋评估使用，我们将严格保密您提供的所有信息。评估结果将作为个性化运动发展规划的重要依据。
+          </p>
+
+          <div class="actions-stack">
+            <button type="button" id="btn-preview" class="secondary">预览结果</button>
+            <button type="button" id="btn-export-json" class="secondary">导出 JSON</button>
+            <button type="button" id="btn-print" class="secondary">生成 PDF / 打印</button>
+            <button type="submit" id="btn-submit" class="primary">提交</button>
+          </div>
+
+          <div id="submit-result" class="result" role="status" aria-live="polite"></div>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <footer class="app-footer">
+    <span>版本 v1.0.0</span>
+    <span id="last-saved">未保存</span>
+  </footer>
+
+  <!-- 预览弹窗 -->
+  <dialog id="preview-dialog">
+    <article>
+      <header>
+        <h3>预览数据</h3>
+        <button id="preview-close" aria-label="关闭">✕</button>
+      </header>
+      <pre id="preview-json" class="preview"></pre>
+      <footer>
+        <button id="copy-json">复制 JSON</button>
+      </footer>
+    </article>
+  </dialog>
+
+  <nav class="bottom-bar">
+    <button id="btn-prev" class="ghost">上一步</button>
+    <button id="btn-save" class="ghost">保存</button>
+    <button id="btn-next" class="primary">下一步</button>
+  </nav>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+﻿# 编辑器/环境
+.codebuddy/
+.vscode/
+.venv/
+*.log
+# 系统
+.DS_Store
+Thumbs.db
