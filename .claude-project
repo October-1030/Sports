@@ -1,0 +1,102 @@
+# 🎯 Claude 项目一览
+
+**当用户给你这个 Git 链接时，立即阅读本文件！**
+
+---
+
+## 📍 这是什么项目？
+
+**儿童运动天赋评估系统** - 科学评估儿童运动潜力，推荐适合的运动项目
+
+---
+
+## ⚡ 用户说"开启这个项目"时，执行：
+
+```bash
+# 1. 克隆（如果需要）
+git clone https://github.com/October-1030/Sports.git
+cd Sports
+
+# 2. 检查依赖
+ls node_modules/ || npm install
+
+# 3. 运行测试
+npm test  # 应该 26/26 通过
+
+# 4. 启动服务器（后台）
+npm run dev  # (background: true)
+
+# 5. 报告给用户
+# ✅ 服务器运行在 http://127.0.0.1:5500
+# ✅ 测试 26/26 通过
+```
+
+**完整流程：** 查看 [AI_STARTUP_GUIDE.md](AI_STARTUP_GUIDE.md)
+
+---
+
+## 📁 项目结构（一目了然）
+
+```
+├── index.html                      # 导航页
+├── sports-talent-assessment.html   # 评估系统（主页面）
+├── domain/
+│   ├── scoring.js                 # 评分引擎
+│   └── scoring.config.js          # 配置
+├── __tests__/                      # 26个测试
+└── package.json                    # npm配置
+```
+
+---
+
+## 🔑 关键文件说明
+
+| 文件 | 用途 | 何时查看 |
+|------|------|----------|
+| **AI_STARTUP_GUIDE.md** | AI启动流程 | 用户说"开启项目" |
+| **QUICK_START.md** | 用户快速开始 | 用户换新电脑 |
+| **CLAUDE.md** | 详细项目指南 | 需要深入了解 |
+| **README.md** | 项目文档 | 通用参考 |
+| **domain/scoring.js** | 评分引擎核心 | 修改评分逻辑 |
+
+---
+
+## 🧪 测试状态
+
+```bash
+npm test  # 应该看到：
+# Test Suites: 2 passed
+# Tests: 26 passed
+```
+
+**如果测试失败，不要启动服务器！**
+
+---
+
+## 💡 常用命令
+
+```bash
+npm run dev          # 启动开发服务器 :5500
+npm test             # 运行所有测试
+npm run test:watch   # 监听模式
+```
+
+---
+
+## 🚨 项目位置
+
+**本地：** `D:\projects\sports-talent-form\`
+**GitHub：** https://github.com/October-1030/Sports
+
+---
+
+## ✅ 任务完成标志
+
+- [ ] 测试全部通过（26/26）
+- [ ] 服务器运行在 http://127.0.0.1:5500
+- [ ] 向用户报告访问地址
+- [ ] 无错误或警告
+
+---
+
+**就这么简单！看完这个文件，你就懂了整个项目！** 🎉
