@@ -3,6 +3,17 @@
 .vscode/
 .venv/
 *.log
+
 # 系统
 .DS_Store
 Thumbs.db
+
+# 依赖
+node_modules/
+
+# 测试覆盖率
+coverage/
+
+# 构建输出
+dist/
+build/

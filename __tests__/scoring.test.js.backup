@@ -1,0 +1,125 @@
+const { calculateScore, determinePath, assessSportsSuitability, evaluate } = require('../domain/scoring');
+
+describe('Scoring Engine Tests', () => {
+  describe('Basic Functionality', () => {
+    test('calculateScore function exists', () => {
+      expect(typeof calculateScore).toBe('function');
+    });
+
+    test('determinePath function exists', () => {
+      expect(typeof determinePath).toBe('function');
+    });
+
+    test('assessSportsSuitability function exists', () => {
+      expect(typeof assessSportsSuitability).toBe('function');
+    });
+
+    test('evaluate function exists', () => {
+      expect(typeof evaluate).toBe('function');
+    });
+  });
+
+  describe('Score Calculation', () => {
+    test('should handle empty data without crashing', () => {
+      const emptyData = {};
+      const result = calculateScore(emptyData);
+      expect(result).toBeDefined();
+    });
+
+    test('should return an object with expected structure', () => {
+      const result = calculateScore({});
+      expect(result).toBeInstanceOf(Object);
+    });
+  });
+
+  describe('Path Determination', () => {
+    test('should determine professional path for high scores', () => {
+      const path = determinePath(85, {});
+      expect(path).toBeDefined();
+      expect(path.level).toBe('professional');
+    });
+
+    test('should determine competitive path for medium-high scores', () => {
+      const path = determinePath(70, {});
+      expect(path).toBeDefined();
+      expect(path.level).toBe('competitive');
+    });
+
+    test('should determine recreational path for medium scores', () => {
+      const path = determinePath(50, {});
+      expect(path).toBeDefined();
+      expect(path.level).toBe('recreational');
+    });
+
+    test('should determine fitness path for low scores', () => {
+      const path = determinePath(30, {});
+      expect(path).toBeDefined();
+      expect(path.level).toBe('fitness');
+    });
+  });
+
+  describe('Sports Suitability Assessment', () => {
+    test('should recommend sports based on characteristics', () => {
+      const mockInput = {
+        childInfo: { age: 10 },
+        family: { father: 180, mother: 165 },
+        currentAbility: { runningSpeed: 8, jumpingAbility: 7 },
+        specialSkills: { swimming: 8, ballSports: 7, trackField: 6 }
+      };
+      const mockScores = {
+        genetics: 75,
+        currentAbility: 70,
+        specialSkills: 65,
+        physicalCondition: 60,
+        psychology: 70
+      };
+      const mockDetails = {};
+
+      const recommendations = assessSportsSuitability(mockInput, mockScores, mockDetails, {});
+      expect(recommendations).toBeInstanceOf(Array);
+      expect(recommendations.length).toBeGreaterThan(0);
+    });
+
+    test('should handle empty characteristics', () => {
+      const recommendations = assessSportsSuitability({}, {}, {}, {});
+      expect(recommendations).toBeInstanceOf(Array);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    test('should handle null values', () => {
+      const dataWithNull = {
+        family: null,
+        currentAbility: {
+          runningSpeed: null
+        }
+      };
+
+      const result = calculateScore(dataWithNull);
+      expect(result).toBeDefined();
+      expect(result.scores).toBeDefined();
+      expect(result.scores.overall).toBeGreaterThanOrEqual(0);
+    });
+
+    test('should handle undefined values', () => {
+      const dataWithUndefined = {
+        family: undefined,
+        currentAbility: {
+          runningSpeed: undefined
+        }
+      };
+
+      const result = calculateScore(dataWithUndefined);
+      expect(result).toBeDefined();
+      expect(result.scores).toBeDefined();
+      expect(result.scores.overall).toBeGreaterThanOrEqual(0);
+    });
+
+    test('should handle invalid score values in path determination', () => {
+      expect(determinePath(-10, {}).level).toBe('fitness');
+      expect(determinePath(150, {}).level).toBe('professional');
+      expect(determinePath(null, {}).level).toBe('fitness');
+      expect(determinePath(undefined, {}).level).toBe('fitness');
+    });
+  });
+});
