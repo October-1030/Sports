@@ -1,56 +1,55 @@
-# 儿童运动天赋评估调查表
+# 🏃‍♂️ 儿童运动天赋评估系统
 
-一个现代化的儿童运动天赋评估系统，采用纯前端技术实现，支持多维度评估和智能推荐。
+一个现代化的儿童运动天赋评估系统，采用纯前端技术实现，支持多维度科学评估和智能推荐。
+
+## ⚡ 快速开始
+
+**换新电脑？只需3个命令！**
+
+```bash
+git clone https://github.com/October-1030/Sports.git
+cd Sports
+npm install
+npm run dev
+```
+
+访问 http://localhost:5500 即可使用！
+
+> 📖 详细说明请查看 [QUICK_START.md](QUICK_START.md)
 
 ## 🚀 功能特性
 
-- **多维度评估**: 遗传潜力、当前能力、专项技能、身体状况、心理特征
-- **智能评分**: 基于科学算法的综合评分系统
-- **项目推荐**: 根据评估结果推荐适合的运动项目
-- **响应式设计**: 支持移动端和桌面端
-- **数据持久化**: 自动保存，防止数据丢失
-- **多种导出**: 支持JSON、PDF、打印等多种导出方式
+- **🧬 多维度评估**: 遗传潜力、当前能力、专项技能、身体状况、心理特征
+- **⚡ 科学评分引擎**: 基于配置化的智能评分系统（5大维度权重可调）
+- **🎯 智能推荐**: 根据评估结果推荐最适合的运动项目
+- **📱 响应式设计**: 完美支持移动端和桌面端
+- **🧪 完整测试**: 26个测试用例，保证代码质量
+- **📊 可视化结果**: 清晰的评估报告和建议
 
 ## 📦 技术栈
 
 - **前端**: HTML5, CSS3, JavaScript (ES6+)
-- **类型系统**: TypeScript
-- **构建工具**: Webpack
-- **测试框架**: Jest
-- **样式**: 自定义CSS主题系统
+- **开发**: TypeScript, Babel
+- **测试**: Jest (26个测试用例全通过)
+- **开发服务器**: live-server
+- **版本控制**: Git + GitHub
 
-## 🛠️ 开发环境
-
-### 安装依赖
+## 🛠️ 开发命令
 
 ```bash
+# 安装依赖
 npm install
-```
 
-### 启动开发服务器
-
-```bash
+# 启动开发服务器 (http://localhost:5500)
 npm run dev
 # 或
 npm start
-```
 
-访问 http://localhost:5500
-
-### 运行测试
-
-```bash
-# 运行所有测试
-npm test
-
-# 监听模式
-npm run test:watch
-
-# 生成覆盖率报告
-npm run test:coverage
-
-# 详细输出
-npm run test:verbose
+# 运行测试
+npm test                    # 运行所有测试
+npm run test:watch         # 监听模式
+npm run test:coverage      # 生成覆盖率报告
+npm run test:verbose       # 详细输出
 ```
 
 ## 🧪 测试配置
@@ -96,36 +95,33 @@ testUtils.simulateInput(element, 'value');
 
 ```
 sports-talent-form/
-├── index.html              # 主页面
-├── app.js                  # 主应用逻辑
-├── submit.js               # 提交处理
-├── serve-local.js          # 本地服务器
-├── package.json            # 项目配置
-├── jest.config.js          # Jest配置
-├── tsconfig.json           # TypeScript配置
-├── domain/                 # 业务逻辑
-│   ├── types.js           # 数据类型定义
-│   ├── scoring.config.js  # 评分配置
-│   └── scoring.js         # 评分引擎
-├── src/domain/            # TypeScript版本
-│   ├── types.ts
-│   ├── scoring.config.ts
-│   └── scoring.ts
-├── themes/                # 样式主题
-│   └── cartoon.css
-└── __tests__/            # 测试文件
-    ├── setup.test.js
-    └── scoring.test.js
+├── index.html                       # 🏠 主导航页
+├── sports-talent-assessment.html    # 📋 完整评估系统
+├── domain/                          # 🧠 核心业务逻辑
+│   ├── scoring.js                  #    评分引擎
+│   ├── scoring.config.js           #    评分配置
+│   └── types.js                    #    数据类型定义
+├── __tests__/                       # 🧪 测试文件
+│   ├── setup.test.js               #    环境测试
+│   └── scoring.test.js             #    评分引擎测试
+├── package.json                     # 📦 项目配置
+├── jest.config.js                   # 🧪 Jest配置
+├── tsconfig.json                    # 📝 TypeScript配置
+├── .babelrc                         # 🔄 Babel配置
+├── .gitignore                       # 🚫 Git忽略文件
+├── README.md                        # 📖 项目说明
+├── QUICK_START.md                   # ⚡ 快速开始
+└── CLAUDE.md                        # 🤖 Claude项目指南
 ```
 
-## 🎨 主题系统
+## 🎨 UI设计
 
-项目采用模块化的主题系统，支持：
+项目采用现代化的UI设计：
 
-- 卡通主题 (`themes/cartoon.css`)
-- 响应式设计
-- 统一的颜色和间距系统
-- 可扩展的主题架构
+- **渐变背景**: 视觉吸引力强
+- **卡片式布局**: 清晰的信息层次
+- **响应式设计**: 移动端和桌面端完美适配
+- **内嵌样式**: 无需外部CSS文件，部署简单
 
 ## 📊 评估维度
 
