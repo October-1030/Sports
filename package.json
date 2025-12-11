@@ -4,20 +4,25 @@
   "description": "一个现代化的儿童运动天赋评估系统，采用纯前端技术实现，支持多维度评估和智能推荐。",
   "main": "index.js",
   "scripts": {
-    "dev": "live-server --port=5500",
-    "start": "npm run dev",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:verbose": "jest --verbose",
-    "build": "webpack --mode production",
-    "build:dev": "webpack --mode development"
+    "test:verbose": "jest --verbose"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/October-1030/Sports.git"
   },
-  "keywords": ["sports", "assessment", "children", "talent", "evaluation"],
+  "keywords": [
+    "sports",
+    "assessment",
+    "children",
+    "talent",
+    "evaluation"
+  ],
   "author": "",
   "license": "MIT",
   "type": "commonjs",
