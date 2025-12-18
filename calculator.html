@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orange Harmony 评分计算器 - 管理后台</title>
+    <!-- PDF导出库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --muted: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--muted);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-group label {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #f8fafc;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #ea580c;
+        }
+
+        .btn-copy {
+            background: #e2e8f0;
+            color: var(--text);
+            margin-top: 12px;
+            width: 100%;
+        }
+
+        .btn-copy:hover {
+            background: #cbd5e1;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-pdf:hover {
+            opacity: 0.9;
+        }
+
+        /* 结果区域 */
+        .result-hidden {
+            display: none;
+        }
+
+        .score-display {
+            text-align: center;
+            padding: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .score-number {
+            font-size: 64px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .score-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .tier-1 { background: #fef3c7; color: #b45309; }
+        .tier-2 { background: #ffedd5; color: #c2410c; }
+        .tier-3 { background: #dcfce7; color: #166534; }
+        .tier-4 { background: #f3f4f6; color: #4b5563; }
+
+        /* 五维评分 */
+        .dimension-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .dimension-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dimension-name {
+            width: 70px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .dimension-bar {
+            flex: 1;
+            height: 24px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .dimension-fill {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            transition: width 0.5s ease;
+        }
+
+        .fill-speed { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+        .fill-power { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .fill-coord { background: linear-gradient(90deg, #10b981, #059669); }
+        .fill-reaction { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+        .fill-genetic { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+        .fill-mindset { background: linear-gradient(90deg, #f97316, #ea580c); }
+
+        /* 推荐项目 */
+        .recommendation-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .rec-icon {
+            font-size: 24px;
+        }
+
+        .rec-info {
+            flex: 1;
+        }
+
+        .rec-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .rec-reason {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .rec-score {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* 预测身高 */
+        .prediction-box {
+            background: #faf5ff;
+            border: 1px solid #e9d5ff;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .prediction-label {
+            font-size: 12px;
+            color: #7c3aed;
+            margin-bottom: 4px;
+        }
+
+        .prediction-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #7c3aed;
+        }
+
+        .prediction-range {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* 复制文本区 */
+        .copy-text {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 13px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* 个性化描述 */
+        .personal-desc {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #92400e;
+        }
+
+        .personal-desc .highlight {
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .personal-desc .strength {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .personal-desc .weakness {
+            color: #9333ea;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Orange Harmony 评分计算器</h1>
+        <p class="subtitle">管理后台 - 输入邮件收到的数据，自动计算评分</p>
+
+        <div class="layout">
+            <!-- 左侧：输入区 -->
+            <div class="panel">
+                <div class="panel-title">
+                    <span>📝</span> 输入评估数据
+                </div>
+
+                <!-- 儿童基本信息 -->
+                <div class="section">
+                    <div class="section-label">儿童信息</div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>性别</label>
+                            <select id="gender">
+                                <option value="male">男</option>
+                                <option value="female">女</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>身高 (cm)</label>
+                            <input type="number" id="childHeight" placeholder="125">
+                        </div>
+                        <div class="input-group">
+                            <label>臂展 (cm)</label>
+                            <input type="number" id="armSpan" placeholder="128">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 父母信息 -->
+                <div class="section">
+                    <div class="section-label">父母身高</div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>父亲 (cm)</label>
+                            <input type="number" id="fatherHeight" placeholder="175">
+                        </div>
+                        <div class="input-group">
+                            <label>母亲 (cm)</label>
+                            <input type="number" id="motherHeight" placeholder="162">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 父母特质 -->
+                <div class="section">
+                    <div class="section-label">父母运动特质</div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>父亲特质</label>
+                            <select id="fatherTrait">
+                                <option value="balanced">均衡发展</option>
+                                <option value="speed">爆发力强</option>
+                                <option value="endurance">耐力出众</option>
+                                <option value="coord">协调性好</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>母亲特质</label>
+                            <select id="motherTrait">
+                                <option value="balanced">均衡发展</option>
+                                <option value="speed">爆发力强</option>
+                                <option value="endurance">耐力出众</option>
+                                <option value="coord">协调性好</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 祖父母运动特长 -->
+                <div class="section">
+                    <div class="section-label">祖父母运动特长（有几个填几个）</div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>有运动特长人数</label>
+                            <select id="gpAthletes">
+                                <option value="0">0人</option>
+                                <option value="1">1人</option>
+                                <option value="2">2人</option>
+                                <option value="3">3人</option>
+                                <option value="4">4人</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 测试成绩 -->
+                <div class="section">
+                    <div class="section-label">测试成绩</div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>立定跳远 (cm)</label>
+                            <input type="number" id="standingJump" placeholder="150">
+                        </div>
+                        <div class="input-group">
+                            <label>坐位体前屈 (cm)</label>
+                            <input type="number" id="flexibility" placeholder="8">
+                        </div>
+                    </div>
+                    <div class="input-row" style="margin-top: 12px;">
+                        <div class="input-group">
+                            <label>闭眼单脚站 (秒)</label>
+                            <input type="number" id="balanceTime" placeholder="20">
+                        </div>
+                        <div class="input-group">
+                            <label>30米冲刺 (秒)</label>
+                            <input type="number" id="sprintTime" placeholder="5.5" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-row" style="margin-top: 12px;">
+                        <div class="input-group">
+                            <label>反应速度-尺子测试 (cm)</label>
+                            <input type="number" id="reactionTest" placeholder="18" step="0.5">
+                        </div>
+                        <div class="input-group" style="font-size: 11px; color: var(--muted); align-self: center;">
+                            测试方法：用30cm尺子垂直掉落，<br>记录孩子抓住的刻度，数值越小越好
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 心理评分 -->
+                <div class="section">
+                    <div class="section-label">心理评分 (1-5)</div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>受教性</label>
+                            <select id="coachability">
+                                <option value="3">3 - 一般</option>
+                                <option value="1">1 - 很低</option>
+                                <option value="2">2 - 较低</option>
+                                <option value="4">4 - 较高</option>
+                                <option value="5">5 - 很高</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>抗压性</label>
+                            <select id="resilience">
+                                <option value="3">3 - 一般</option>
+                                <option value="1">1 - 很低</option>
+                                <option value="2">2 - 较低</option>
+                                <option value="4">4 - 较高</option>
+                                <option value="5">5 - 很高</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>竞争欲</label>
+                            <select id="competitiveness">
+                                <option value="3">3 - 一般</option>
+                                <option value="1">1 - 很低</option>
+                                <option value="2">2 - 较低</option>
+                                <option value="4">4 - 较高</option>
+                                <option value="5">5 - 很高</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="calculate()">计算评分</button>
+            </div>
+
+            <!-- 右侧：结果区 -->
+            <div class="panel" id="resultPanel">
+                <div class="panel-title">
+                    <span>📊</span> 评估结果
+                </div>
+
+                <div id="resultPlaceholder" style="text-align: center; color: var(--muted); padding: 60px 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🎯</div>
+                    <div>填写左侧数据后点击"计算评分"</div>
+                </div>
+
+                <div id="resultContent" class="result-hidden">
+                    <!-- 综合分数 -->
+                    <div class="score-display">
+                        <div class="score-number" id="totalScore">--</div>
+                        <div class="score-label">综合评分</div>
+                        <div class="tier-badge tier-2" id="tierBadge">Tier 2 竞技储备</div>
+                    </div>
+
+                    <!-- 个性化描述 -->
+                    <div class="personal-desc" id="personalDesc">
+                        <!-- 动态生成 -->
+                    </div>
+
+                    <!-- 预测身高 -->
+                    <div class="prediction-box">
+                        <div class="prediction-label">预测成年身高</div>
+                        <div class="prediction-value" id="predictedHeight">175</div>
+                        <div class="prediction-range" id="heightRange">范围: 171-179 cm</div>
+                    </div>
+
+                    <!-- 六维评分 -->
+                    <div class="section-label" style="margin-bottom: 12px;">六维评分</div>
+                    <div class="dimension-list">
+                        <div class="dimension-item">
+                            <span class="dimension-name">速度</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill fill-speed" id="barSpeed" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="dimension-item">
+                            <span class="dimension-name">爆发力</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill fill-power" id="barPower" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="dimension-item">
+                            <span class="dimension-name">协调性</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill fill-coord" id="barCoord" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="dimension-item">
+                            <span class="dimension-name">反应速度</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill fill-reaction" id="barReaction" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="dimension-item">
+                            <span class="dimension-name">遗传潜力</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill fill-genetic" id="barGenetic" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="dimension-item">
+                            <span class="dimension-name">心理韧性</span>
+                            <div class="dimension-bar">
+                                <div class="dimension-fill fill-mindset" id="barMindset" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 推荐项目 -->
+                    <div class="section-label" style="margin-bottom: 12px;">推荐运动项目</div>
+                    <div class="recommendation-list" id="recommendations">
+                        <!-- 动态生成 -->
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="btn-row">
+                        <button class="btn btn-pdf" onclick="exportPDF()">导出 PDF</button>
+                        <button class="btn btn-copy" onclick="copyResult()">复制文字</button>
+                    </div>
+                    <div class="copy-text" id="copyText" style="margin-top: 12px; display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 评分配置 ============
+        const CONFIG = {
+            // 立定跳远评分标准
+            jumpScoring: {
+                male: [
+                    { min: 200, score: 100 },
+                    { min: 180, score: 90 },
+                    { min: 160, score: 80 },
+                    { min: 140, score: 70 },
+                    { min: 120, score: 60 },
+                    { min: 100, score: 50 },
+                    { min: 0, score: 40 }
+                ],
+                female: [
+                    { min: 180, score: 100 },
+                    { min: 160, score: 90 },
+                    { min: 140, score: 80 },
+                    { min: 120, score: 70 },
+                    { min: 100, score: 60 },
+                    { min: 80, score: 50 },
+                    { min: 0, score: 40 }
+                ]
+            },
+            tierThresholds: {
+                tier1: 85,
+                tier2: 70,
+                tier3: 55
+            }
+        };
+
+        // ============ 计算函数 ============
+        function calculate() {
+            // 获取输入值
+            const gender = document.getElementById('gender').value;
+            const childHeight = parseFloat(document.getElementById('childHeight').value) || 0;
+            const armSpan = parseFloat(document.getElementById('armSpan').value) || 0;
+            const fatherHeight = parseFloat(document.getElementById('fatherHeight').value) || 170;
+            const motherHeight = parseFloat(document.getElementById('motherHeight').value) || 160;
+            const fatherTrait = document.getElementById('fatherTrait').value;
+            const motherTrait = document.getElementById('motherTrait').value;
+            const gpAthletes = parseInt(document.getElementById('gpAthletes').value) || 0;
+            const standingJump = parseFloat(document.getElementById('standingJump').value) || 0;
+            const flexibility = parseFloat(document.getElementById('flexibility').value) || 0;
+            const balanceTime = parseFloat(document.getElementById('balanceTime').value) || 0;
+            const sprintTime = parseFloat(document.getElementById('sprintTime').value) || 0;
+            const reactionTest = parseFloat(document.getElementById('reactionTest').value) || 0;
+            const coachability = parseInt(document.getElementById('coachability').value) || 3;
+            const resilience = parseInt(document.getElementById('resilience').value) || 3;
+            const competitiveness = parseInt(document.getElementById('competitiveness').value) || 3;
+
+            // 计算 Ape Index
+            const apeIndex = armSpan - childHeight;
+
+            // 计算预测身高（优化版）
+            let predictedHeight;
+
+            // 基础遗传预测（FPH公式）
+            if (gender === 'male') {
+                predictedHeight = Math.round((fatherHeight + motherHeight * 1.08) / 2);
+            } else {
+                predictedHeight = Math.round((fatherHeight * 0.923 + motherHeight) / 2);
+            }
+
+            // Ape Index 调整（臂展长的孩子通常最终身高更高）
+            if (apeIndex > 0) {
+                predictedHeight += Math.min(Math.round(apeIndex * 0.5), 4);
+            }
+
+            // 当前身高修正（如果孩子已经很高，说明发育好，预测应上调）
+            if (childHeight > 0) {
+                const ratio = childHeight / predictedHeight;
+
+                // 如果当前身高已达到预测的95%+，说明预测可能保守了
+                if (ratio >= 0.98) {
+                    // 已经接近或超过预测值，至少还能长5-8cm
+                    predictedHeight = Math.max(predictedHeight, childHeight + 7);
+                } else if (ratio >= 0.95) {
+                    // 接近预测值，还有发育空间
+                    predictedHeight = Math.max(predictedHeight, childHeight + 10);
+                } else if (ratio >= 0.90) {
+                    // 发育良好，可能超过遗传预测
+                    predictedHeight = Math.max(predictedHeight, Math.round(childHeight / 0.88));
+                }
+
+                // 祖父母运动特长加成（运动家庭的孩子通常发育更好）
+                if (gpAthletes >= 2) {
+                    predictedHeight += 2;
+                }
+            }
+
+            // 计算六维评分
+            const scores = {
+                speed: calculateSpeedScore(sprintTime, standingJump, gender, fatherTrait, motherTrait),
+                power: calculatePowerScore(standingJump, gender, fatherTrait, motherTrait),
+                coordination: calculateCoordinationScore(balanceTime, flexibility, fatherTrait, motherTrait),
+                reaction: calculateReactionScore(reactionTest),
+                genetic: calculateGeneticScore(fatherTrait, motherTrait, gpAthletes),
+                mindset: calculateMindsetScore(coachability, resilience, competitiveness)
+            };
+
+            // 计算综合分数（六维加权）
+            const overallScore = Math.round(
+                scores.speed * 0.20 +
+                scores.power * 0.20 +
+                scores.coordination * 0.15 +
+                scores.reaction * 0.10 +
+                scores.genetic * 0.20 +
+                scores.mindset * 0.15
+            );
+
+            // 确定 Tier 等级
+            let tier, tierLabel;
+            if (overallScore >= CONFIG.tierThresholds.tier1) {
+                tier = 1; tierLabel = 'Tier 1 精英潜力';
+            } else if (overallScore >= CONFIG.tierThresholds.tier2) {
+                tier = 2; tierLabel = 'Tier 2 竞技储备';
+            } else if (overallScore >= CONFIG.tierThresholds.tier3) {
+                tier = 3; tierLabel = 'Tier 3 兴趣培养';
+            } else {
+                tier = 4; tierLabel = 'Tier 4 基础发展';
+            }
+
+            // 生成推荐项目
+            const recommendations = generateRecommendations(scores, apeIndex, flexibility);
+
+            // 显示结果
+            displayResults(overallScore, tier, tierLabel, scores, predictedHeight, recommendations, apeIndex);
+        }
+
+        function calculateSpeedScore(sprintTime, jump, gender, fatherTrait, motherTrait) {
+            let score = 60;
+
+            if (sprintTime > 0) {
+                // 有冲刺成绩
+                score = Math.max(40, 80 - (sprintTime - 4.5) * 20);
+            } else if (jump > 0) {
+                // 用跳远推算
+                score = getJumpScore(jump, gender) * 0.8;
+            }
+
+            // 特质加分
+            if (fatherTrait === 'speed') score += 8;
+            if (motherTrait === 'speed') score += 8;
+
+            return clamp(Math.round(score), 0, 100);
+        }
+
+        function calculatePowerScore(jump, gender, fatherTrait, motherTrait) {
+            let score = getJumpScore(jump, gender);
+
+            if (fatherTrait === 'speed') score += 5;
+            if (motherTrait === 'speed') score += 5;
+
+            return clamp(Math.round(score), 0, 100);
+        }
+
+        function calculateCoordinationScore(balanceTime, flexibility, fatherTrait, motherTrait) {
+            let score = 60;
+
+            if (balanceTime >= 30) score = 90;
+            else if (balanceTime >= 20) score = 80;
+            else if (balanceTime >= 10) score = 70;
+            else if (balanceTime > 0) score = 60;
+
+            // 柔韧性调整
+            if (flexibility > 10) score += 5;
+            else if (flexibility < -5) score -= 5;
+
+            // 特质加分
+            if (fatherTrait === 'coord') score += 8;
+            if (motherTrait === 'coord') score += 8;
+
+            return clamp(Math.round(score), 0, 100);
+        }
+
+        function calculateGeneticScore(fatherTrait, motherTrait, gpAthletes) {
+            let score = 50;
+
+            // 父母特质加分
+            if (fatherTrait !== 'balanced') score += 8;
+            if (motherTrait !== 'balanced') score += 8;
+
+            // 祖父母运动特长加分
+            score += gpAthletes * 5;
+
+            return clamp(Math.round(score), 0, 100);
+        }
+
+        function calculateMindsetScore(coachability, resilience, competitiveness) {
+            const weighted = coachability * 0.3 + resilience * 0.4 + competitiveness * 0.3;
+            return clamp(Math.round(40 + weighted * 12), 0, 100);
+        }
+
+        // 反应速度评分（尺子测试，cm越小越好）
+        function calculateReactionScore(reactionCm) {
+            if (reactionCm <= 0) return 60; // 未测试给默认分
+
+            // 尺子测试标准（儿童）：
+            // 优秀: < 12cm (反应时间约 0.15秒)
+            // 良好: 12-18cm (反应时间约 0.15-0.19秒)
+            // 一般: 18-25cm (反应时间约 0.19-0.22秒)
+            // 较差: > 25cm
+            if (reactionCm < 10) return 100;
+            if (reactionCm < 12) return 95;
+            if (reactionCm < 15) return 88;
+            if (reactionCm < 18) return 80;
+            if (reactionCm < 22) return 70;
+            if (reactionCm < 25) return 60;
+            return 50;
+        }
+
+        function getJumpScore(distance, gender) {
+            const ranges = CONFIG.jumpScoring[gender];
+            for (const range of ranges) {
+                if (distance >= range.min) {
+                    return range.score;
+                }
+            }
+            return 40;
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        function generateRecommendations(scores, apeIndex, flexibility) {
+            const recommendations = [];
+
+            // ============ 特长型推荐（有明显优势才推荐）============
+
+            // 臂展优势项目 - 游泳
+            if (apeIndex >= 0) {
+                let swimScore = 75 + apeIndex * 3; // 基础分 + 臂展加成
+                let swimReason = '';
+
+                if (apeIndex >= 5) {
+                    swimScore = 98;
+                    swimReason = '臂展优势极佳，游泳天赋出众';
+                } else if (apeIndex >= 3) {
+                    swimScore = 92;
+                    swimReason = '臂展优势明显，非常适合游泳';
+                } else if (apeIndex >= 1) {
+                    swimScore = 85;
+                    swimReason = '臂展有优势，适合游泳项目';
+                } else {
+                    swimScore = 78;
+                    swimReason = '身体比例适中，可发展游泳';
+                }
+
+                recommendations.push({
+                    icon: '🏊',
+                    name: '游泳',
+                    score: Math.min(swimScore, 100),
+                    reason: swimReason
+                });
+            }
+
+            // 速度型项目
+            if (scores.speed >= 75) {
+                recommendations.push({
+                    icon: '🏃',
+                    name: '短跑/田径',
+                    score: scores.speed,
+                    reason: '速度优势突出，适合短跑项目'
+                });
+            }
+
+            // 爆发力项目
+            if (scores.power >= 75) {
+                recommendations.push({
+                    icon: '🏀',
+                    name: '篮球/排球',
+                    score: scores.power,
+                    reason: '爆发力出色，适合球类跳跃项目'
+                });
+            }
+
+            // 协调性项目
+            if (scores.coordination >= 75) {
+                recommendations.push({
+                    icon: '🎾',
+                    name: '网球/羽毛球',
+                    score: scores.coordination,
+                    reason: '协调性好，适合球拍类运动'
+                });
+            }
+
+            // ============ 综合性运动智能匹配 ============
+            // 根据孩子的维度特点推荐不同的综合性运动
+
+            const comprehensiveSports = [];
+
+            // 乒乓球 - 协调性高 + 反应快
+            if (scores.coordination >= 65 || scores.reaction >= 75) {
+                comprehensiveSports.push({
+                    icon: '🏓',
+                    name: '乒乓球',
+                    score: Math.round(scores.coordination * 0.4 + scores.reaction * 0.4 + scores.speed * 0.2),
+                    reason: '协调反应佳，适合精细球类运动'
+                });
+            }
+
+            // 武术/跆拳道 - 爆发力 + 心理韧性
+            if (scores.power >= 60 && scores.mindset >= 60) {
+                comprehensiveSports.push({
+                    icon: '🥋',
+                    name: '武术/跆拳道',
+                    score: Math.round(scores.power * 0.4 + scores.mindset * 0.4 + scores.coordination * 0.2),
+                    reason: '爆发力强、心理素质好，适合格斗类'
+                });
+            }
+
+            // 体操 - 协调性 + 柔韧性好
+            if (scores.coordination >= 65 && flexibility > 5) {
+                comprehensiveSports.push({
+                    icon: '🤸',
+                    name: '体操',
+                    score: Math.round(scores.coordination * 0.5 + 50 + Math.min(flexibility, 15)),
+                    reason: '协调柔韧俱佳，适合技巧类运动'
+                });
+            }
+
+            // 滑冰/轮滑 - 协调性 + 平衡感
+            if (scores.coordination >= 60) {
+                comprehensiveSports.push({
+                    icon: '⛸️',
+                    name: '滑冰/轮滑',
+                    score: Math.round(scores.coordination * 0.7 + scores.speed * 0.3),
+                    reason: '平衡协调好，适合滑行类运动'
+                });
+            }
+
+            // 攀岩 - 心理韧性高 + 协调
+            if (scores.mindset >= 70) {
+                comprehensiveSports.push({
+                    icon: '🧗',
+                    name: '攀岩',
+                    score: Math.round(scores.mindset * 0.5 + scores.coordination * 0.3 + scores.power * 0.2),
+                    reason: '心理素质强，适合挑战型运动'
+                });
+            }
+
+            // 击剑 - 反应速度快 + 协调
+            if (scores.reaction >= 75) {
+                comprehensiveSports.push({
+                    icon: '🤺',
+                    name: '击剑',
+                    score: Math.round(scores.reaction * 0.5 + scores.coordination * 0.3 + scores.speed * 0.2),
+                    reason: '反应敏捷，适合对抗性技巧运动'
+                });
+            }
+
+            // 足球 - 速度 + 协调均衡
+            if (scores.speed >= 55 && scores.coordination >= 55) {
+                comprehensiveSports.push({
+                    icon: '⚽',
+                    name: '足球',
+                    score: Math.round((scores.speed + scores.coordination) / 2),
+                    reason: '速度协调均衡，适合团队对抗'
+                });
+            }
+
+            // 自行车 - 耐力型、腿部力量
+            comprehensiveSports.push({
+                icon: '🚴',
+                name: '自行车',
+                score: Math.round(scores.power * 0.5 + 50),
+                reason: '锻炼耐力和腿部力量'
+            });
+
+            // 按匹配度排序综合性运动
+            comprehensiveSports.sort((a, b) => b.score - a.score);
+
+            // 用综合性运动补充到3个推荐
+            for (const sport of comprehensiveSports) {
+                if (recommendations.length >= 3) break;
+                // 避免重复类型
+                const exists = recommendations.some(r => r.name === sport.name);
+                if (!exists) {
+                    recommendations.push(sport);
+                }
+            }
+
+            // 最后的兜底：综合体能训练
+            if (recommendations.length < 3) {
+                recommendations.push({
+                    icon: '💪',
+                    name: '综合体能训练',
+                    score: 70,
+                    reason: '打好基础，为专项运动做准备'
+                });
+            }
+
+            // 排序并返回前3个
+            recommendations.sort((a, b) => b.score - a.score);
+            return recommendations.slice(0, 3);
+        }
+
+        // 生成个性化描述
+        function generatePersonalDescription(scores, apeIndex, predictedHeight) {
+            const parts = [];
+
+            // 找出优势维度（≥75分）
+            const strengths = [];
+            if (scores.speed >= 75) strengths.push('速度');
+            if (scores.power >= 75) strengths.push('爆发力');
+            if (scores.coordination >= 75) strengths.push('协调性');
+            if (scores.reaction >= 80) strengths.push('反应速度');
+            if (scores.genetic >= 75) strengths.push('遗传潜力');
+            if (scores.mindset >= 75) strengths.push('心理韧性');
+
+            // 找出弱势维度（<60分）
+            const weaknesses = [];
+            if (scores.speed < 60) weaknesses.push('速度');
+            if (scores.power < 60) weaknesses.push('爆发力');
+            if (scores.coordination < 60) weaknesses.push('协调性');
+            if (scores.reaction < 60) weaknesses.push('反应速度');
+            if (scores.mindset < 60) weaknesses.push('心理韧性');
+
+            // 开头：综合评价
+            if (strengths.length >= 3) {
+                parts.push('您的孩子是一个<span class="highlight">综合素质出众</span>的运动苗子');
+            } else if (strengths.length >= 1) {
+                parts.push(`您的孩子在<span class="strength">${strengths.join('、')}</span>方面表现突出`);
+            } else {
+                parts.push('您的孩子目前处于均衡发展阶段');
+            }
+
+            // 臂展优势
+            if (apeIndex > 5) {
+                parts.push(`，臂展比身高长<span class="highlight">${apeIndex}cm</span>，这是游泳、篮球等项目的天赋优势`);
+            } else if (apeIndex > 2) {
+                parts.push('，臂展略长于身高，在水上运动中会有一定优势');
+            }
+
+            // 身高预测
+            if (predictedHeight >= 180) {
+                parts.push(`。预测成年身高<span class="highlight">${predictedHeight}cm</span>，属于高个子类型，适合篮球、排球等需要身高优势的项目`);
+            } else if (predictedHeight >= 170) {
+                parts.push(`。预测成年身高${predictedHeight}cm，身高适中，运动项目选择面较广`);
+            } else {
+                parts.push(`。预测成年身高${predictedHeight}cm，可重点发展灵活性和技巧性运动`);
+            }
+
+            // 特质描述
+            if (scores.speed >= 80 && scores.power >= 80) {
+                parts.push('。<span class="strength">爆发力和速度俱佳</span>，是短跑、跳跃类项目的理想人选');
+            } else if (scores.coordination >= 80 && scores.reaction >= 80) {
+                parts.push('。<span class="strength">协调性好、反应敏捷</span>，非常适合球类运动和格斗类项目');
+            } else if (scores.mindset >= 80) {
+                parts.push('。<span class="strength">心理素质出色</span>，能够承受高强度训练和比赛压力');
+            }
+
+            // 弱势提醒（委婉表达）
+            if (weaknesses.length > 0 && weaknesses.length <= 2) {
+                parts.push(`。<span class="weakness">${weaknesses.join('和')}</span>方面还有提升空间，建议通过针对性训练加强`);
+            }
+
+            // 咨询引导
+            const consultNote = '<br><br><span style="font-size: 12px; color: #6b7280;">📋 本报告为初步评估，运动项目的选择需综合考虑身体条件、发育趋势、家族特征等因素。如需一对一运动方向建议，欢迎咨询「橙风破浪 体优橙长」专业团队。</span>';
+
+            return parts.join('') + '。' + consultNote;
+        }
+
+        function displayResults(overallScore, tier, tierLabel, scores, predictedHeight, recommendations, apeIndex) {
+            // 显示结果区域
+            document.getElementById('resultPlaceholder').style.display = 'none';
+            document.getElementById('resultContent').classList.remove('result-hidden');
+
+            // 综合分数
+            document.getElementById('totalScore').textContent = overallScore;
+
+            // Tier 徽章
+            const tierBadge = document.getElementById('tierBadge');
+            tierBadge.textContent = tierLabel;
+            tierBadge.className = 'tier-badge tier-' + tier;
+
+            // 个性化描述
+            const personalDesc = generatePersonalDescription(scores, apeIndex, predictedHeight);
+            document.getElementById('personalDesc').innerHTML = personalDesc;
+
+            // 预测身高
+            document.getElementById('predictedHeight').textContent = predictedHeight + ' cm';
+            document.getElementById('heightRange').textContent = `范围: ${predictedHeight - 4} - ${predictedHeight + 4} cm | Ape Index: ${apeIndex > 0 ? '+' : ''}${apeIndex} cm`;
+
+            // 六维评分条
+            setTimeout(() => {
+                document.getElementById('barSpeed').style.width = scores.speed + '%';
+                document.getElementById('barSpeed').textContent = scores.speed;
+                document.getElementById('barPower').style.width = scores.power + '%';
+                document.getElementById('barPower').textContent = scores.power;
+                document.getElementById('barCoord').style.width = scores.coordination + '%';
+                document.getElementById('barCoord').textContent = scores.coordination;
+                document.getElementById('barReaction').style.width = scores.reaction + '%';
+                document.getElementById('barReaction').textContent = scores.reaction;
+                document.getElementById('barGenetic').style.width = scores.genetic + '%';
+                document.getElementById('barGenetic').textContent = scores.genetic;
+                document.getElementById('barMindset').style.width = scores.mindset + '%';
+                document.getElementById('barMindset').textContent = scores.mindset;
+            }, 100);
+
+            // 推荐项目
+            const recContainer = document.getElementById('recommendations');
+            recContainer.innerHTML = recommendations.map(rec => `
+                <div class="recommendation-item">
+                    <div class="rec-icon">${rec.icon}</div>
+                    <div class="rec-info">
+                        <div class="rec-name">${rec.name}</div>
+                        <div class="rec-reason">${rec.reason}</div>
+                    </div>
+                    <div class="rec-score">${Math.round(rec.score)}%</div>
+                </div>
+            `).join('');
+
+            // 生成复制文本
+            generateCopyText(overallScore, tierLabel, scores, predictedHeight, recommendations, apeIndex, personalDesc);
+        }
+
+        function generateCopyText(overallScore, tierLabel, scores, predictedHeight, recommendations, apeIndex, personalDescHtml) {
+            // 将HTML标签转换为纯文本
+            const personalDescText = personalDescHtml
+                .replace(/<span class="[^"]*">/g, '')
+                .replace(/<\/span>/g, '')
+                .replace(/。。/g, '。');
+
+            const text = `
+【橙风破浪 体优橙长 · 评估报告】
+
+综合评分：${overallScore} 分
+发展等级：${tierLabel}
+
+【个性化评估】
+${personalDescText}
+
+预测成年身高：${predictedHeight} cm（±4cm）
+Ape Index：${apeIndex > 0 ? '+' : ''}${apeIndex} cm
+
+【六维评分】
+速度：${scores.speed}/100
+爆发力：${scores.power}/100
+协调性：${scores.coordination}/100
+反应速度：${scores.reaction}/100
+遗传潜力：${scores.genetic}/100
+心理韧性：${scores.mindset}/100
+
+【推荐运动项目】
+${recommendations.map((r, i) => `${i + 1}. ${r.icon} ${r.name}（${Math.round(r.score)}%）- ${r.reason}`).join('\n')}
+
+---
+📋 本报告为初步评估，运动项目的选择需综合考虑身体条件、发育趋势、家族特征等因素。如需一对一运动方向建议，欢迎咨询「橙风破浪 体优橙长」专业团队。
+
+橙风破浪 体优橙长 · 儿童运动天赋评估
+            `.trim();
+
+            document.getElementById('copyText').textContent = text;
+        }
+
+        function copyResult() {
+            const copyText = document.getElementById('copyText');
+            copyText.style.display = 'block';
+
+            navigator.clipboard.writeText(copyText.textContent).then(() => {
+                alert('评估报告已复制到剪贴板！');
+            }).catch(() => {
+                // 降级方案
+                copyText.select();
+                document.execCommand('copy');
+                alert('评估报告已复制！');
+            });
+        }
+
+        // 导出PDF
+        function exportPDF() {
+            const resultContent = document.getElementById('resultContent');
+
+            if (resultContent.classList.contains('result-hidden')) {
+                alert('请先计算评分！');
+                return;
+            }
+
+            // 获取当前日期作为文件名
+            const today = new Date().toLocaleDateString('zh-CN').replace(/\//g, '-');
+            const score = document.getElementById('totalScore').textContent;
+            const filename = `橙风破浪评估报告_${score}分_${today}.pdf`;
+
+            // 配置选项
+            const opt = {
+                margin: 10,
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait'
+                }
+            };
+
+            // 临时隐藏按钮
+            const btnRow = document.querySelector('.btn-row');
+            const copyText = document.getElementById('copyText');
+            btnRow.style.display = 'none';
+            copyText.style.display = 'none';
+
+            // 生成PDF
+            html2pdf().set(opt).from(resultContent).save().then(() => {
+                // 恢复按钮显示
+                btnRow.style.display = 'flex';
+            });
+        }
+
+        // ============ URL 参数自动填充 ============
+        function parseUrlAndFill() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('d');
+
+            if (!dataParam) return false;
+
+            try {
+                // Base64 解码
+                const jsonStr = decodeURIComponent(escape(atob(dataParam)));
+                const data = JSON.parse(jsonStr);
+
+                // 填充表单
+                if (data.g) document.getElementById('gender').value = data.g === 'm' ? 'male' : 'female';
+                if (data.ch) document.getElementById('childHeight').value = data.ch;
+                if (data.as) document.getElementById('armSpan').value = data.as;
+                if (data.fh) document.getElementById('fatherHeight').value = data.fh;
+                if (data.mh) document.getElementById('motherHeight').value = data.mh;
+                if (data.ft) document.getElementById('fatherTrait').value = data.ft;
+                if (data.mt) document.getElementById('motherTrait').value = data.mt;
+                if (data.gp !== undefined) document.getElementById('gpAthletes').value = data.gp;
+                if (data.sj) document.getElementById('standingJump').value = data.sj;
+                if (data.fl) document.getElementById('flexibility').value = data.fl;
+                if (data.bt) document.getElementById('balanceTime').value = data.bt;
+                if (data.st) document.getElementById('sprintTime').value = data.st;
+                if (data.rt) document.getElementById('reactionTest').value = data.rt;
+                if (data.co) document.getElementById('coachability').value = data.co;
+                if (data.re) document.getElementById('resilience').value = data.re;
+                if (data.cp) document.getElementById('competitiveness').value = data.cp;
+
+                // 显示来源提示
+                if (data.ct) {
+                    showDataSource(data.ct);
+                }
+
+                return true;
+            } catch (e) {
+                console.error('URL数据解析失败:', e);
+                return false;
+            }
+        }
+
+        // 显示数据来源提示
+        function showDataSource(contact) {
+            const subtitle = document.querySelector('.subtitle');
+            subtitle.innerHTML = `数据已自动填充 · 来源: <strong>${contact}</strong> · <a href="calculator.html" style="color: var(--primary);">清空重填</a>`;
+            subtitle.style.color = '#059669';
+        }
+
+        // 页面加载时检查URL参数
+        window.addEventListener('DOMContentLoaded', () => {
+            const hasData = parseUrlAndFill();
+            if (hasData) {
+                // 自动计算并显示结果
+                setTimeout(() => {
+                    calculate();
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>
