@@ -1,689 +1,2998 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>体育人才评估系统 - 响应式优化版</title>
-    <meta name="description" content="专为华人设计的微信小程序风格体育人才评估系统，完全响应式设计">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orange Harmony - 儿童运动天赋评估</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-    <!-- 外部资源 -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="src/css/styles.css">
+    <style>
+        :root {
+            /* 橙风破浪主色调 */
+            --primary: #f97316;
+            --primary-dark: #c2410c;
+            --primary-light: #fdba74;
+
+            /* 深空灰 */
+            --bg-dark: #0f172a;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --bg-glass: rgba(255, 255, 255, 0.85);
+
+            /* 功能色 */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+
+            /* 父母色系 */
+            --father-primary: #f97316;
+            --father-bg: #fff7ed;
+            --mother-primary: #ec4899;
+            --mother-bg: #fdf2f8;
+
+            /* 文字 */
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+
+            /* 圆角 */
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* 主容器 */
+        .app-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        /* 磨砂玻璃面板 */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* 头部导航 */
+        .header {
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .logo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--bg-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .logo-title span {
+            color: var(--primary);
+        }
+
+        .logo-subtitle {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* 进度指示器 */
+        .progress-bar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .progress-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-muted);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .progress-dot.active {
+            background: var(--bg-dark);
+            border-color: var(--bg-dark);
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.3);
+        }
+
+        .progress-dot.completed {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .progress-dot.completed::after {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 12px;
+        }
+
+        .progress-dot.completed span {
+            display: none;
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 32px;
+            min-height: 500px;
+        }
+
+        /* 步骤页面 */
+        .step-page {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .step-page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== 首页 Landing Page 样式 ========== */
+        .landing-page {
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-page .decorative-circle {
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .landing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .landing-brand {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--bg-dark);
+        }
+
+        .landing-brand span {
+            color: var(--primary);
+        }
+
+        .landing-version {
+            font-size: 11px;
+            font-weight: 600;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: var(--text-muted);
+        }
+
+        .hero-section {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 32px;
+        }
+
+        .hero-title {
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1.2;
+            color: var(--bg-dark);
+            margin-bottom: 16px;
+        }
+
+        .hero-title .gradient-text {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-desc {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* 特性卡片 */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero-title {
+                font-size: 28px;
+            }
+        }
+
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .feature-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .feature-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* 准备清单 */
+        .prep-box {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .prep-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+
+        .prep-content h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .prep-list {
+            list-style: none;
+        }
+
+        .prep-list li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        /* 呼吸动效按钮 */
+        .pulse-btn {
+            animation: pulse-shadow 2s infinite;
+        }
+
+        @keyframes pulse-shadow {
+            0% { box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3); }
+            50% { box-shadow: 0 4px 25px rgba(15, 23, 42, 0.5); }
+            100% { box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3); }
+        }
+
+        .start-btn {
+            width: 100%;
+            padding: 18px 32px;
+            background: var(--bg-dark);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .start-btn:hover {
+            background: #000;
+            transform: translateY(-2px);
+        }
+
+        .social-proof {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 16px;
+        }
+
+        /* 首页时隐藏进度条 */
+        .header.landing-mode .progress-bar {
+            display: none;
+        }
+
+        /* 页面标题区 */
+        .page-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .page-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .page-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* 表单元素 */
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 选择卡片 */
+        .card-select {
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+        }
+
+        .card-select:hover {
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+
+        .card-select.selected {
+            border-color: var(--primary);
+            background: var(--father-bg);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .card-select.selected-pink {
+            border-color: var(--mother-primary);
+            background: var(--mother-bg);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+        }
+
+        /* 复选框列表 */
+        .checkbox-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #e0f2fe;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            accent-color: var(--primary);
+        }
+
+        .checkbox-item.checked {
+            background: #ffedd5;
+            border-color: var(--primary);
+        }
+
+        /* 身体健康选项 - 绿色样式 */
+        .checkbox-item.checkbox-healthy {
+            background: #f0fdf4;
+            border-color: #22c55e;
+        }
+
+        .checkbox-item.checkbox-healthy:hover {
+            background: #dcfce7;
+        }
+
+        .checkbox-item.checkbox-healthy input[type="checkbox"] {
+            accent-color: #22c55e;
+        }
+
+        .checkbox-item.checkbox-healthy.checked {
+            background: #dcfce7;
+            border-color: #16a34a;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+        }
+
+        .checkbox-item.checkbox-healthy .checkbox-title {
+            color: #166534;
+        }
+
+        .checkbox-content {
+            flex: 1;
+        }
+
+        .checkbox-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .checkbox-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 警告框 */
+        .alert {
+            padding: 16px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .alert-danger {
+            background: var(--danger);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .alert-icon {
+            font-size: 20px;
+        }
+
+        .alert-text {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* 双栏布局 (遗传页面) */
+        .dual-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .dual-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .parent-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .parent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .parent-card.father::before {
+            background: var(--father-primary);
+        }
+
+        .parent-card.mother::before {
+            background: var(--mother-primary);
+        }
+
+        .parent-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .parent-badge.father {
+            background: var(--father-bg);
+            color: var(--father-primary);
+        }
+
+        .parent-badge.mother {
+            background: var(--mother-bg);
+            color: var(--mother-primary);
+        }
+
+        /* 祖父母区域 - 新版 */
+        .gp-section {
+            margin-top: 24px;
+            border: 1px dashed #fed7aa;
+            background: rgba(255, 247, 237, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .gp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .gp-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gp-header-icon {
+            font-size: 20px;
+        }
+
+        .gp-header-title {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 15px;
+        }
+
+        .gp-badge {
+            background: #fef3c7;
+            color: #b45309;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+            border: 1px solid #fde68a;
+        }
+
+        .gp-toggle-btn {
+            font-size: 12px;
+            color: #f97316;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .gp-toggle-btn:hover {
+            text-decoration: underline;
+        }
+
+        .gp-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 640px) {
+            .gp-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .gp-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .gp-column-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .gp-card {
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .gp-card-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .gp-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .gp-avatar.paternal {
+            background: #ffedd5;
+        }
+
+        .gp-avatar.paternal-light {
+            background: #fff7ed;
+        }
+
+        .gp-avatar.maternal {
+            background: #fce7f3;
+        }
+
+        .gp-avatar.maternal-light {
+            background: #fdf2f8;
+        }
+
+        .gp-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gp-name-cn {
+            font-size: 13px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .gp-name-en {
+            font-size: 10px;
+            color: #9ca3af;
+        }
+
+        .gp-card-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gp-height-input {
+            width: 50px;
+            background: #f9fafb;
+            border: none;
+            border-radius: 6px;
+            padding: 6px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .gp-height-input:focus {
+            outline: none;
+            background: #fff7ed;
+        }
+
+        .gp-height-input::placeholder {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .gp-trait-select {
+            background: #f9fafb;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #4b5563;
+            cursor: pointer;
+            min-width: 75px;
+        }
+
+        .gp-trait-select:focus {
+            outline: none;
+            background: #fff7ed;
+        }
+
+        .gp-section.collapsed .gp-grid {
+            display: none;
+        }
+
+        /* 体型选择器 */
+        .body-type-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .body-type-card {
+            padding: 16px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #f8fafc;
+        }
+
+        .body-type-card:hover {
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+        }
+
+        .body-type-card.selected-orange {
+            border-color: var(--father-primary);
+            background: var(--father-bg);
+        }
+
+        .body-type-card.selected-pink {
+            border-color: var(--mother-primary);
+            background: var(--mother-bg);
+        }
+
+        .body-type-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .body-type-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .body-type-desc {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        /* 特质选择卡片 */
+        .trait-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trait-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trait-card:hover {
+            background: #f1f5f9;
+        }
+
+        .trait-card:active {
+            transform: scale(0.98);
+        }
+
+        .trait-card.selected-orange {
+            background: var(--father-bg);
+            border-color: var(--father-primary);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.15);
+        }
+
+        .trait-card.selected-pink {
+            background: var(--mother-bg);
+            border-color: var(--mother-primary);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+        }
+
+        .trait-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .trait-content {
+            flex: 1;
+        }
+
+        .trait-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .trait-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .trait-check {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .trait-check.orange {
+            color: var(--father-primary);
+        }
+
+        .trait-check.pink {
+            color: var(--mother-primary);
+        }
+
+        /* 测量提示 */
+        .measure-tip {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border: 1px solid #fdba74;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .measure-tip-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .measure-tip-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .measure-tip-content p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* 必测/选测标签 */
+        .test-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .test-badge.required {
+            background: var(--bg-dark);
+            color: white;
+        }
+
+        .test-badge.optional {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* 测试卡片 */
+        .test-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.3s;
+        }
+
+        .test-card.skipped {
+            opacity: 0.6;
+            background: #f1f5f9;
+        }
+
+        .test-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .test-card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .test-card-title h4 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .skip-btn {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .skip-btn:hover {
+            color: var(--primary);
+        }
+
+        /* 滑块 */
+        .slider-container {
+            margin-bottom: 24px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .slider-label.left {
+            color: var(--danger);
+        }
+
+        .slider-label.right {
+            color: var(--success);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(to right, #fecaca, #bbf7d0);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 8px;
+        }
+
+        /* 结果页面 */
+        .result-header {
+            background: var(--bg-dark);
+            color: white;
+            padding: 32px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 8px;
+        }
+
+        .result-score {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .result-level {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fbbf24;
+        }
+
+        /* 公众号引导 */
+        .qrcode-card {
+            background: white;
+            border: 2px solid var(--success);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .qrcode-icon {
+            font-size: 48px;
+            color: var(--success);
+            margin-bottom: 16px;
+        }
+
+        .qrcode-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .qrcode-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .qrcode-image-wrapper {
+            text-align: center;
+            margin: 0 auto 24px;
+        }
+
+        .qrcode-image {
+            width: 180px;
+            height: 180px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .qrcode-tip {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .qrcode-steps {
+            text-align: left;
+            background: #f8fafc;
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .qrcode-step {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .qrcode-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .qrcode-step-num {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .qrcode-step-text {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        /* 底部按钮 */
+        .footer {
+            padding: 24px 32px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-primary {
+            background: var(--bg-dark);
+            color: white;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-primary:hover {
+            background: #1e293b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* 教程弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: modalSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #e2e8f0;
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .modal-demo {
+            width: 100%;
+            min-height: 180px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* 有图片时的样式 */
+        .modal-demo.has-image {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important;
+            box-shadow: none;
+            min-height: 200px;
+            padding: 16px;
+        }
+
+        .modal-demo.has-image img {
+            max-height: 180px;
+            object-fit: contain;
+            transform: scale(1.2);
+        }
+
+        .modal-demo-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .modal-demo-text {
+            font-weight: 700;
+        }
+
+        .modal-demo-hint {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .modal-steps {
+            margin-bottom: 20px;
+        }
+
+        .modal-step {
+            font-size: 14px;
+            color: var(--text-primary);
+            line-height: 1.7;
+            margin-bottom: 10px;
+        }
+
+        .modal-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-step-num {
+            font-weight: 700;
+            color: var(--text-primary);
+            min-width: 20px;
+        }
+
+        .modal-tip {
+            background: #fefce8;
+            border: 1px solid #fef08a;
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .modal-tip-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .modal-tip-content {
+            flex: 1;
+        }
+
+        .modal-tip-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #854d0e;
+            margin-bottom: 4px;
+        }
+
+        .modal-tip-text {
+            font-size: 12px;
+            color: #854d0e;
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+
+        /* 输入框单位标签 */
+        .input-with-unit {
+            position: relative;
+        }
+
+        .input-unit {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        /* 帮助按钮 */
+        .help-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .help-btn.purple {
+            background: #f3e8ff;
+            color: #9333ea;
+        }
+
+        .help-btn.purple:hover {
+            background: #e9d5ff;
+        }
+
+        .help-btn.orange {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+
+        .help-btn.orange:hover {
+            background: #fed7aa;
+        }
+
+        .how-to-btn {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ea580c;
+            background: #fff7ed;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            transition: all 0.2s;
+        }
+
+        .how-to-btn:hover {
+            background: #ffedd5;
+        }
+
+        /* 性别选择 */
+        .gender-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .gender-card {
+            padding: 24px;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .gender-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .gender-card.selected {
+            border-color: var(--primary);
+            background: var(--father-bg);
+        }
+
+        .gender-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .gender-label {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* 隐藏元素 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 输入组 */
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 480px) {
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 响应式 */
+        @media (max-width: 640px) {
+            .app-container {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 16px 20px;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .footer {
+                padding: 16px 20px;
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .progress-dot {
+                width: 32px;
+                height: 32px;
+                font-size: 12px;
+            }
+
+            .body-type-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-
 <body>
-    <!-- 桌面端键盘提示 -->
-    <div class="keyboard-hint" style="display: none;">
-        快捷键: ← → 切换步骤 | Enter 下一步 | Esc 返回
-    </div>
-
     <div class="app-container">
-        <!-- 应用头部 -->
-        <header class="app-header">
-            <h1 class="app-title">🏃‍♂️ 体育人才评估系统</h1>
-            <p class="app-subtitle">专业·智能·个性化·响应式</p>
-            <div class="step-indicator">
-                <div class="step-dot active" data-step="1"></div>
-                <div class="step-dot" data-step="2"></div>
-                <div class="step-dot" data-step="3"></div>
-                <div class="step-dot" data-step="4"></div>
-                <div class="step-dot" data-step="5"></div>
-            </div>
-        </header>
-
-        <!-- 步骤1: 基本信息 -->
-        <div class="step active" data-step="1">
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <h2 class="card-title">基本信息</h2>
+        <div class="glass-panel">
+            <!-- 头部 -->
+            <div class="header landing-mode" id="main-header">
+                <div class="logo">
+                    <div class="logo-title">Orange <span>Harmony</span></div>
+                    <div class="logo-subtitle">儿童运动天赋评估</div>
                 </div>
-
-                <div class="form-group">
-                    <label class="form-label required">儿童姓名</label>
-                    <input type="text" class="form-input" placeholder="请输入儿童姓名" id="childName">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required">性别</label>
-                    <div class="radio-group">
-                        <div class="radio-item" onclick="selectRadio(this, 'gender', '男', event)">
-                            <input type="radio" name="gender" value="男" class="radio-input">
-                            <span>👦 男孩</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'gender', '女', event)">
-                            <input type="radio" name="gender" value="女" class="radio-input">
-                            <span>👧 女孩</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label required">出生日期</label>
-                    <input type="date" class="form-input" id="birthDate">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">身高 (cm)</label>
-                    <input type="number" class="form-input" placeholder="例如: 120" id="height">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">体重 (kg)</label>
-                    <input type="number" class="form-input" placeholder="例如: 25" id="weight">
+                <div class="progress-bar">
+                    <div class="progress-dot" data-step="1"><span>1</span></div>
+                    <div class="progress-dot" data-step="2"><span>2</span></div>
+                    <div class="progress-dot" data-step="3"><span>3</span></div>
+                    <div class="progress-dot" data-step="4"><span>4</span></div>
+                    <div class="progress-dot" data-step="5"><span>5</span></div>
                 </div>
             </div>
 
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-users"></i>
+            <!-- 内容区域 -->
+            <div class="content">
+
+                <!-- Step 0: 首页 Landing Page -->
+                <div class="step-page landing-page active" data-step="0">
+                    <div class="decorative-circle"></div>
+
+                    <div class="landing-header">
+                        <div class="landing-brand">橙风破浪 <span>体优橙长</span></div>
+                        <div class="landing-version">儿童运动天赋评估</div>
                     </div>
-                    <h2 class="card-title">父母信息</h2>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">父亲身高 (cm)</label>
-                    <input type="number" class="form-input" placeholder="例如: 175" id="fatherHeight">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">母亲身高 (cm)</label>
-                    <input type="number" class="form-input" placeholder="例如: 165" id="motherHeight">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">家族运动背景</label>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'family_sports', event)">
-                            <input type="checkbox" value="professional" class="checkbox-input">
-                            <span>🏆 家族有专业运动员</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'family_sports', event)">
-                            <input type="checkbox" value="amateur" class="checkbox-input">
-                            <span>🏃‍♀️ 父母经常运动</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'family_sports', event)">
-                            <input type="checkbox" value="genes" class="checkbox-input">
-                            <span>🧬 有运动天赋基因</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 步骤2: 兴趣探索 -->
-        <div class="step" data-step="2">
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-heart"></i>
-                    </div>
-                    <h2 class="card-title">运动兴趣</h2>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">最喜欢的运动项目 (可多选)</label>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'interests', event)">
-                            <input type="checkbox" value="swimming" class="checkbox-input">
-                            <span>🏊‍♂️ 游泳</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'interests', event)">
-                            <input type="checkbox" value="basketball" class="checkbox-input">
-                            <span>🏀 篮球</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'interests', event)">
-                            <input type="checkbox" value="soccer" class="checkbox-input">
-                            <span>⚽ 足球</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'interests', event)">
-                            <input type="checkbox" value="tennis" class="checkbox-input">
-                            <span>🎾 网球</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'interests', event)">
-                            <input type="checkbox" value="gymnastics" class="checkbox-input">
-                            <span>🤸‍♀️ 体操</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'interests', event)">
-                            <input type="checkbox" value="track" class="checkbox-input">
-                            <span>🏃‍♂️ 田径</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">每周运动频率</label>
-                    <div class="radio-group">
-                        <div class="radio-item" onclick="selectRadio(this, 'frequency', '1-2', event)">
-                            <input type="radio" name="frequency" value="1-2" class="radio-input">
-                            <span>📅 每周1-2次</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'frequency', '3-4', event)">
-                            <input type="radio" name="frequency" value="3-4" class="radio-input">
-                            <span>📅 每周3-4次</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'frequency', '5+', event)">
-                            <input type="radio" name="frequency" value="5+" class="radio-input">
-                            <span>📅 每周5次以上</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 步骤3: 身体评估 -->
-        <div class="step" data-step="3">
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <h2 class="card-title">身体状况</h2>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">身体素质评估</label>
-                    <div class="form-group">
-                        <label class="form-label">🏃‍♂️ 短距离冲刺测试</label>
-                        <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                            💡 <strong>测试方法：</strong>在家中走廊或小区空地，让孩子全力冲刺约10米距离。观察与同龄孩子相比的速度表现。
+                    <div class="hero-section">
+                        <h1 class="hero-title">
+                            发现孩子的<br>
+                            <span class="gradient-text">运动天赋基因</span>
+                        </h1>
+                        <p class="hero-desc">
+                            基于 NSCA 标准与双源遗传算法，为您揭示 4-14 岁儿童的最佳运动路径。
                         </p>
-                        <div class="radio-group">
-                            <div class="radio-item" onclick="selectRadio(this, 'speed', 'excellent', event)">
-                                <input type="radio" name="speed" value="excellent" class="radio-input">
-                                <span>🥇 明显比同龄孩子快（反应迅速，启动快，步频高）</span>
+                    </div>
+
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">🧬</div>
+                            <div class="feature-title">双源遗传解码</div>
+                            <div class="feature-desc">独立分析父母隐性基因，挖掘被埋没的天赋。</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">📏</div>
+                            <div class="feature-title">身体硬件扫描</div>
+                            <div class="feature-desc">臂展、坐高等核心数据，精准预测成年身高。</div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">🏠</div>
+                            <div class="feature-title">家庭实测系统</div>
+                            <div class="feature-desc">科学的客厅测试方案，无需专业跑道。</div>
+                        </div>
+                    </div>
+
+                    <div class="prep-box">
+                        <div class="prep-icon">📝</div>
+                        <div class="prep-content">
+                            <h4>评估前准备 (约 5-8 分钟)</h4>
+                            <ul class="prep-list">
+                                <li>• 孩子在身边（需测量与简单活动）</li>
+                                <li>• 准备一把卷尺</li>
+                                <li>• 穿着舒适的运动鞋/防滑袜</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="start-btn pulse-btn" onclick="startAssessment()">
+                        开始专业评估 <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <p class="social-proof">已有 12,450+ 位家长获取了专业选材报告</p>
+                </div>
+
+                <!-- Step 1: 安全准入 -->
+                <div class="step-page" data-step="1">
+                    <div class="page-header">
+                        <div class="page-icon" style="background: #fef2f2; color: #dc2626;">
+                            <i class="fas fa-shield-heart"></i>
+                        </div>
+                        <h2 class="page-title">安全准入筛查</h2>
+                        <p class="page-desc">专业评估的前提是确保孩子的健康安全</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="checkbox-list">
+                            <label class="checkbox-item" id="heart-check">
+                                <input type="checkbox" name="safety_heart" onchange="handleSafetyCheck(this, 'heart')">
+                                <div class="checkbox-content">
+                                    <div class="checkbox-title">心脏相关病史</div>
+                                    <div class="checkbox-desc">先天性心脏病、心律不齐或心脏手术史</div>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="safety_asthma" onchange="handleSafetyCheck(this, 'asthma')">
+                                <div class="checkbox-content">
+                                    <div class="checkbox-title">呼吸系统问题 (哮喘)</div>
+                                    <div class="checkbox-desc">需评估冷空气或运动诱发风险</div>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="safety_allergy" onchange="handleSafetyCheck(this, 'allergy')">
+                                <div class="checkbox-content">
+                                    <div class="checkbox-title">严重过敏史</div>
+                                    <div class="checkbox-desc">如氯气过敏、花粉过敏等</div>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="safety_injury" onchange="handleSafetyCheck(this, 'injury')">
+                                <div class="checkbox-content">
+                                    <div class="checkbox-title">习惯性骨骼/关节损伤</div>
+                                    <div class="checkbox-desc">反复发生的扭伤、骨折等</div>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-item checkbox-healthy" id="healthy-check">
+                                <input type="checkbox" name="safety_healthy" onchange="handleSafetyCheck(this, 'healthy')">
+                                <div class="checkbox-content">
+                                    <div class="checkbox-title">✅ 身体健康，无上述情况</div>
+                                    <div class="checkbox-desc">孩子身体状况良好，可以参与正常体育活动</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <!-- 心脏问题警告 -->
+                        <div class="alert alert-danger hidden" id="heart-alert">
+                            <span class="alert-icon"><i class="fas fa-ban"></i></span>
+                            <span class="alert-text">监测到心脏风险，系统已锁定。请先咨询医生。</span>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">视力状况</label>
+                        <div class="input-group" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="card-select" onclick="selectOption(this, 'vision', 'normal')">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">👁️</div>
+                                    <div style="font-weight: 600;">正常</div>
+                                </div>
                             </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'speed', 'good', event)">
-                                <input type="radio" name="speed" value="good" class="radio-input">
-                                <span>🥈 比大部分同龄孩子快（跑起来比较轻松）</span>
+                            <div class="card-select" onclick="selectOption(this, 'vision', 'glasses')">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">👓</div>
+                                    <div style="font-weight: 600;">戴眼镜</div>
+                                </div>
                             </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'speed', 'average', event)">
-                                <input type="radio" name="speed" value="average" class="radio-input">
-                                <span>🥉 和大部分同龄孩子差不多（中等水平）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'speed', 'poor', event)">
-                                <input type="radio" name="speed" value="poor" class="radio-input">
-                                <span>📝 比大部分同龄孩子慢（跑起来比较吃力）</span>
+                            <div class="card-select" onclick="selectOption(this, 'vision', 'contacts')">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 24px; margin-bottom: 8px;">🔵</div>
+                                    <div style="font-weight: 600;">隐形眼镜</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">🦘 立定跳远测试</label>
-                        <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                            💡 <strong>测试方法：</strong>让孩子双脚并拢站立，原地用力向前跳。可用卷尺测量距离，或用地砖/A4纸（约30cm）作为参照。
+                    <div class="form-section" style="margin-top: 24px;">
+                        <label class="checkbox-item" style="background: #f0fdf4; border-color: #86efac;" id="consent-check">
+                            <input type="checkbox" name="consent" id="consent-input" onchange="updateNextButton()">
+                            <div class="checkbox-content">
+                                <div class="checkbox-title" style="color: #166534;">我承诺以上信息属实</div>
+                                <div class="checkbox-desc">如有隐瞒可能影响评估准确性及孩子安全</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 2: 家族遗传图谱 -->
+                <div class="step-page" data-step="2">
+                    <div class="page-header">
+                        <div class="page-icon" style="background: #ede9fe; color: #7c3aed;">
+                            <i class="fas fa-dna"></i>
+                        </div>
+                        <h2 class="page-title">双源遗传图谱</h2>
+                        <p class="page-desc">请分别录入父母信息，系统将进行 <strong style="color: var(--primary);">基因叠加计算</strong></p>
+                    </div>
+
+                    <div class="dual-column">
+                        <!-- 父亲栏 -->
+                        <div class="parent-card father">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 24px;">👨</span>
+                                    <span style="font-weight: 700; color: #9a3412;">父亲档案</span>
+                                </div>
+                                <div style="position: relative;">
+                                    <input type="number" class="form-input" name="father_height" placeholder="?"
+                                           style="width: 85px; text-align: center; background: #fff7ed; border: none; font-weight: 700; color: #9a3412;">
+                                    <span style="position: absolute; right: -28px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--text-muted);">cm</span>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <label class="form-label">最显著的机能特质</label>
+                                <div class="trait-list">
+                                    <div class="trait-card selected-orange" data-trait="balanced" onclick="selectTrait(this, 'father', 'balanced')">
+                                        <div class="trait-icon">⚖️</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">均衡发展</div>
+                                            <div class="trait-desc">无显著偏科 / 综合素质</div>
+                                        </div>
+                                        <div class="trait-check orange">✓</div>
+                                    </div>
+                                    <div class="trait-card" data-trait="speed" onclick="selectTrait(this, 'father', 'speed')">
+                                        <div class="trait-icon">⚡️</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">爆发力强</div>
+                                            <div class="trait-desc">跑得快 / 弹跳好 (快肌)</div>
+                                        </div>
+                                        <div class="trait-check orange" style="display: none;">✓</div>
+                                    </div>
+                                    <div class="trait-card" data-trait="endurance" onclick="selectTrait(this, 'father', 'endurance')">
+                                        <div class="trait-icon">🏃</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">耐力出众</div>
+                                            <div class="trait-desc">恢复快 / 不知疲倦 (慢肌)</div>
+                                        </div>
+                                        <div class="trait-check orange" style="display: none;">✓</div>
+                                    </div>
+                                    <div class="trait-card" data-trait="coord" onclick="selectTrait(this, 'father', 'coord')">
+                                        <div class="trait-icon">🎯</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">协调性好</div>
+                                            <div class="trait-desc">学动作快 / 灵活 (神经)</div>
+                                        </div>
+                                        <div class="trait-check orange" style="display: none;">✓</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 母亲栏 -->
+                        <div class="parent-card mother">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 24px;">👩</span>
+                                    <span style="font-weight: 700; color: #9d174d;">母亲档案</span>
+                                </div>
+                                <div style="position: relative;">
+                                    <input type="number" class="form-input" name="mother_height" placeholder="?"
+                                           style="width: 85px; text-align: center; background: #fdf2f8; border: none; font-weight: 700; color: #9d174d;">
+                                    <span style="position: absolute; right: -28px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--text-muted);">cm</span>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <label class="form-label">最显著的机能特质</label>
+                                <div class="trait-list">
+                                    <div class="trait-card selected-pink" data-trait="balanced" onclick="selectTrait(this, 'mother', 'balanced')">
+                                        <div class="trait-icon">⚖️</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">均衡发展</div>
+                                            <div class="trait-desc">无显著偏科 / 综合素质</div>
+                                        </div>
+                                        <div class="trait-check pink">✓</div>
+                                    </div>
+                                    <div class="trait-card" data-trait="speed" onclick="selectTrait(this, 'mother', 'speed')">
+                                        <div class="trait-icon">⚡️</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">爆发力强</div>
+                                            <div class="trait-desc">跑得快 / 弹跳好 (快肌)</div>
+                                        </div>
+                                        <div class="trait-check pink" style="display: none;">✓</div>
+                                    </div>
+                                    <div class="trait-card" data-trait="endurance" onclick="selectTrait(this, 'mother', 'endurance')">
+                                        <div class="trait-icon">🏃</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">耐力出众</div>
+                                            <div class="trait-desc">恢复快 / 不知疲倦 (慢肌)</div>
+                                        </div>
+                                        <div class="trait-check pink" style="display: none;">✓</div>
+                                    </div>
+                                    <div class="trait-card" data-trait="coord" onclick="selectTrait(this, 'mother', 'coord')">
+                                        <div class="trait-icon">🎯</div>
+                                        <div class="trait-content">
+                                            <div class="trait-title">协调性好</div>
+                                            <div class="trait-desc">学动作快 / 灵活 (神经)</div>
+                                        </div>
+                                        <div class="trait-check pink" style="display: none;">✓</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 祖父母信息（可选） -->
+                    <div class="gp-section" id="grandparents-section">
+                        <!-- 标题栏 -->
+                        <div class="gp-header">
+                            <div class="gp-header-left">
+                                <span class="gp-header-icon">👴👵</span>
+                                <span class="gp-header-title">隔代遗传追溯</span>
+                                <span class="gp-badge">选填 · 提升预测精度</span>
+                            </div>
+                            <button class="gp-toggle-btn" onclick="toggleGrandparents()" id="gp-toggle-btn">收起</button>
+                        </div>
+
+                        <div class="gp-grid" id="grandparents-content">
+                            <!-- 左侧：父系家族 -->
+                            <div class="gp-column">
+                                <div class="gp-column-label">父系长辈 (Paternal)</div>
+
+                                <!-- 爷爷 -->
+                                <div class="gp-card">
+                                    <div class="gp-card-left">
+                                        <div class="gp-avatar paternal">👴</div>
+                                        <div class="gp-info">
+                                            <div class="gp-name-cn">爷爷</div>
+                                            <div class="gp-name-en">Grandpa</div>
+                                        </div>
+                                    </div>
+                                    <div class="gp-card-right">
+                                        <input type="number" class="gp-height-input" name="paternal_grandfather_height" placeholder="cm">
+                                        <select class="gp-trait-select" name="paternal_grandfather_trait">
+                                            <option value="none">无特长</option>
+                                            <option value="tall">🌲 高大</option>
+                                            <option value="explosive">⚡ 爆发</option>
+                                            <option value="strong">💪 力量</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- 奶奶 -->
+                                <div class="gp-card">
+                                    <div class="gp-card-left">
+                                        <div class="gp-avatar paternal-light">👵</div>
+                                        <div class="gp-info">
+                                            <div class="gp-name-cn">奶奶</div>
+                                            <div class="gp-name-en">Grandma</div>
+                                        </div>
+                                    </div>
+                                    <div class="gp-card-right">
+                                        <input type="number" class="gp-height-input" name="paternal_grandmother_height" placeholder="cm">
+                                        <select class="gp-trait-select" name="paternal_grandmother_trait">
+                                            <option value="none">无特长</option>
+                                            <option value="tall">🌲 高挑</option>
+                                            <option value="athletic">⚡ 运动</option>
+                                            <option value="strong">💪 力量</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 右侧：母系家族 -->
+                            <div class="gp-column">
+                                <div class="gp-column-label">母系长辈 (Maternal)</div>
+
+                                <!-- 外公 -->
+                                <div class="gp-card">
+                                    <div class="gp-card-left">
+                                        <div class="gp-avatar maternal">👴</div>
+                                        <div class="gp-info">
+                                            <div class="gp-name-cn">外公</div>
+                                            <div class="gp-name-en">Grandpa</div>
+                                        </div>
+                                    </div>
+                                    <div class="gp-card-right">
+                                        <input type="number" class="gp-height-input" name="maternal_grandfather_height" placeholder="cm">
+                                        <select class="gp-trait-select" name="maternal_grandfather_trait">
+                                            <option value="none">无特长</option>
+                                            <option value="tall">🌲 高大</option>
+                                            <option value="explosive">⚡ 爆发</option>
+                                            <option value="strong">💪 力量</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- 外婆 -->
+                                <div class="gp-card">
+                                    <div class="gp-card-left">
+                                        <div class="gp-avatar maternal-light">👵</div>
+                                        <div class="gp-info">
+                                            <div class="gp-name-cn">外婆</div>
+                                            <div class="gp-name-en">Grandma</div>
+                                        </div>
+                                    </div>
+                                    <div class="gp-card-right">
+                                        <input type="number" class="gp-height-input" name="maternal_grandmother_height" placeholder="cm">
+                                        <select class="gp-trait-select" name="maternal_grandmother_trait">
+                                            <option value="none">无特长</option>
+                                            <option value="tall">🌲 高挑</option>
+                                            <option value="athletic">⚡ 运动</option>
+                                            <option value="strong">💪 力量</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: 儿童身体硬件 -->
+                <div class="step-page" data-step="3">
+                    <div class="page-header">
+                        <div class="page-icon" style="background: #ecfdf5; color: #059669;">
+                            <i class="fas fa-ruler-vertical"></i>
+                        </div>
+                        <h2 class="page-title">儿童身体硬件</h2>
+                        <p class="page-desc">请准备好卷尺进行测量</p>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">性别</label>
+                        <div class="gender-select">
+                            <div class="gender-card" onclick="selectGender(this, 'male')">
+                                <div class="gender-icon">👦</div>
+                                <div class="gender-label">男孩</div>
+                            </div>
+                            <div class="gender-card" onclick="selectGender(this, 'female')">
+                                <div class="gender-icon">👧</div>
+                                <div class="gender-label">女孩</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <label class="form-label">出生年月</label>
+                        <input type="month" class="form-input" name="birth_date">
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-section">
+                            <label class="form-label">身高 (cm)</label>
+                            <input type="number" class="form-input" name="child_height" placeholder="如: 125">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">体重 (kg)</label>
+                            <input type="number" class="form-input" name="child_weight" placeholder="如: 25">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="measure-tip">
+                            <div class="measure-tip-icon">
+                                <i class="fas fa-expand-arrows-alt"></i>
+                            </div>
+                            <div class="measure-tip-content">
+                                <h4>臂展测量方法</h4>
+                                <p>让孩子贴墙站立，双手平举与肩齐平，测量两手指尖之间的距离</p>
+                            </div>
+                        </div>
+                        <label class="form-label">
+                            臂展 (Arm Span)
+                            <span class="test-badge required" style="margin-left: 8px;">必测</span>
+                        </label>
+                        <input type="number" class="form-input" name="arm_span" placeholder="双臂展开指尖距离 (cm)" step="0.1">
+                    </div>
+
+                    <div class="form-section">
+                        <div class="measure-tip" style="background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); border-color: #fde047;">
+                            <div class="measure-tip-icon" style="background: #eab308;">
+                                <i class="fas fa-couch"></i>
+                            </div>
+                            <div class="measure-tip-content">
+                                <h4>坐高测量方法 (选填)</h4>
+                                <p>让孩子坐在凳子上，背部挺直，测量头顶到凳面的距离</p>
+                            </div>
+                        </div>
+                        <label class="form-label">
+                            坐高 (Sitting Height)
+                            <span class="test-badge optional" style="margin-left: 8px;">选填</span>
+                        </label>
+                        <input type="number" class="form-input" name="sitting_height" placeholder="选填，可提高预测精度 (cm)" step="0.1">
+                    </div>
+                </div>
+
+                <!-- Step 4: 家庭运动实测 -->
+                <div class="step-page" data-step="4">
+                    <div class="page-header">
+                        <div class="page-icon" style="background: #fff7ed; color: #ea580c;">
+                            <i class="fas fa-stopwatch"></i>
+                        </div>
+                        <h2 class="page-title">家庭运动实测</h2>
+                        <p class="page-desc">无需专业跑道，客厅即可完成</p>
+                    </div>
+
+                    <!-- 神经协调测试 -->
+                    <div class="test-card">
+                        <div class="test-card-header">
+                            <div class="test-card-title">
+                                <span class="test-badge" style="background: var(--bg-dark); color: white;">必测</span>
+                                <h4>神经协调测试 (二选一)</h4>
+                            </div>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                            测试神经肌肉协调能力，选择一种方式完成即可。
                         </p>
-                        <div class="radio-group">
-                            <div class="radio-item" onclick="selectRadio(this, 'strength', 'excellent', event)">
-                                <input type="radio" name="strength" value="excellent" class="radio-input">
-                                <span>🥇 能跳过1米以上（约3-4张A4纸长度）</span>
+
+                        <div class="input-group" style="grid-template-columns: 1fr 1fr;">
+                            <!-- 方式A -->
+                            <div style="border: 1px solid #e2e8f0; border-radius: var(--radius-lg); padding: 20px; background: rgba(248,250,252,0.5);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                    <span style="font-weight: 700; color: var(--text-primary); font-size: 14px;">方式A: 闭眼单脚站立</span>
+                                    <button class="help-btn purple" onclick="showHelp('balance')">❓</button>
+                                </div>
+                                <div class="input-with-unit">
+                                    <input type="number" class="form-input" name="balance_time" placeholder="坚持秒数" step="0.1">
+                                    <span class="input-unit">s</span>
+                                </div>
                             </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'strength', 'good', event)">
-                                <input type="radio" name="strength" value="good" class="radio-input">
-                                <span>🥈 能跳过80-100厘米（约2.5-3张A4纸）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'strength', 'average', event)">
-                                <input type="radio" name="strength" value="average" class="radio-input">
-                                <span>🥉 能跳过60-80厘米（约2-2.5张A4纸）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'strength', 'poor', event)">
-                                <input type="radio" name="strength" value="poor" class="radio-input">
-                                <span>📝 跳不过60厘米（少于2张A4纸）</span>
+                            <!-- 方式B -->
+                            <div style="border: 1px solid #e2e8f0; border-radius: var(--radius-lg); padding: 20px; background: rgba(248,250,252,0.5);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                    <span style="font-weight: 700; color: var(--text-primary); font-size: 14px;">方式B: 双手快速击打 (20秒)</span>
+                                    <button class="help-btn orange" onclick="showHelp('tapping')">❓</button>
+                                </div>
+                                <div class="input-with-unit">
+                                    <input type="number" class="form-input" name="tapping_count" placeholder="击打次数">
+                                    <span class="input-unit">次</span>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">🤹‍♂️ 单脚平衡测试</label>
-                        <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                            💡 <strong>测试方法：</strong>让孩子单脚站立（另一只脚抬起），双手叉腰或伸展保持平衡。观察能坚持多久不晃动。
-                        </p>
-                        <div class="radio-group">
-                            <div class="radio-item" onclick="selectRadio(this, 'coordination', 'excellent', event)">
-                                <input type="radio" name="coordination" value="excellent" class="radio-input">
-                                <span>🥇 能稳定站立30秒以上（闭眼也能站10秒+）</span>
+                    <!-- 立定跳远 -->
+                    <div class="test-card">
+                        <div class="test-card-header">
+                            <div class="test-card-title">
+                                <span class="test-badge" style="background: #f97316; color: white;">必测</span>
+                                <h4>立定跳远</h4>
                             </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'coordination', 'good', event)">
-                                <input type="radio" name="coordination" value="good" class="radio-input">
-                                <span>🥈 能站立15-30秒（身体偶尔晃动）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'coordination', 'average', event)">
-                                <input type="radio" name="coordination" value="average" class="radio-input">
-                                <span>🥉 能站立5-15秒（需要调整姿势）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'coordination', 'poor', event)">
-                                <input type="radio" name="coordination" value="poor" class="radio-input">
-                                <span>📝 站不到5秒（很快失去平衡）</span>
-                            </div>
+                            <button class="how-to-btn" onclick="showHelp('jump')">
+                                📺 动作标准演示
+                            </button>
+                        </div>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-input" name="standing_jump" placeholder="例如: 165" step="1" style="font-size: 18px; padding: 16px;">
+                            <span class="input-unit">cm</span>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">🧘 柔韧性测试（坐位体前屈）</label>
-                        <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                            💡 <strong>测试方法：</strong>让孩子坐在地上，双腿伸直并拢，脚尖朝上。身体前倾，双手慢慢向前伸，尝试触碰脚趾。
-                        </p>
-                        <div class="radio-group">
-                            <div class="radio-item" onclick="selectRadio(this, 'flexibility', 'excellent', event)">
-                                <input type="radio" name="flexibility" value="excellent" class="radio-input">
-                                <span>🥇 手掌能完全超过脚趾5厘米以上（柔韧性优秀）</span>
+                    <!-- 坐位体前屈 -->
+                    <div class="test-card">
+                        <div class="test-card-header">
+                            <div class="test-card-title">
+                                <span class="test-badge" style="background: #10b981; color: white;">必测</span>
+                                <h4>坐位体前屈</h4>
                             </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'flexibility', 'good', event)">
-                                <input type="radio" name="flexibility" value="good" class="radio-input">
-                                <span>🥈 手指能触碰到脚趾或略微超过（柔韧性良好）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'flexibility', 'average', event)">
-                                <input type="radio" name="flexibility" value="average" class="radio-input">
-                                <span>🥉 手指距离脚趾5-10厘米（柔韧性一般）</span>
-                            </div>
-                            <div class="radio-item" onclick="selectRadio(this, 'flexibility', 'poor', event)">
-                                <input type="radio" name="flexibility" value="poor" class="radio-input">
-                                <span>📝 手指距离脚趾超过10厘米（需要加强柔韧性训练）</span>
-                            </div>
+                            <button class="how-to-btn" onclick="showHelp('flexibility')" style="color: #10b981; background: #ecfdf5;">
+                                📺 动作标准演示
+                            </button>
+                        </div>
+                        <div class="input-with-unit">
+                            <input type="number" class="form-input" name="flexibility" placeholder="超过脚尖为正，不及为负" step="0.5" style="font-size: 18px; padding: 16px;">
+                            <span class="input-unit">cm</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- 步骤4: 运动表现 -->
-        <div class="step" data-step="4">
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-medal"></i>
-                    </div>
-                    <h2 class="card-title">运动表现</h2>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">参加过的运动训练</label>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                            <input type="checkbox" value="swimming_course" class="checkbox-input">
-                            <span>🏊‍♂️ 游泳课程</span>
+                    <!-- 选测项: 30米冲刺 -->
+                    <div class="test-card" id="sprint-card">
+                        <div class="test-card-header">
+                            <div class="test-card-title">
+                                <span class="test-badge optional">推荐</span>
+                                <h4>30米冲刺</h4>
+                            </div>
+                            <button class="skip-btn" onclick="toggleSprintTest()">
+                                <span id="sprint-toggle-text">无场地？跳过</span>
+                            </button>
                         </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                            <input type="checkbox" value="ball_sports" class="checkbox-input">
-                            <span>⚽ 球类运动</span>
+                        <div id="sprint-input-area">
+                            <div class="input-with-unit">
+                                <input type="number" class="form-input" name="sprint_time" placeholder="冲刺时间" step="0.1" style="font-size: 18px; padding: 16px;">
+                                <span class="input-unit">秒</span>
+                            </div>
                         </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                            <input type="checkbox" value="martial_arts" class="checkbox-input">
-                            <span>🥋 武术/跆拳道</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                            <input type="checkbox" value="dance" class="checkbox-input">
-                            <span>💃 舞蹈</span>
-                        </div>
-                        <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                            <input type="checkbox" value="none" class="checkbox-input">
-                            <span>❌ 暂无系统训练</span>
+                        <div id="sprint-skip-msg" class="hidden" style="padding: 16px; background: #f1f5f9; border-radius: var(--radius-sm); text-align: center;">
+                            <p style="font-size: 13px; color: var(--text-secondary);">
+                                <i class="fas fa-calculator" style="margin-right: 8px;"></i>
+                                系统将根据跳远和遗传数据估算速度潜力
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">🎯 运动技能学习速度观察</label>
-                    <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                        💡 <strong>观察重点：</strong>回忆孩子学习新运动技能（如骑车、跳绳、拍球、游泳）时的表现。
-                    </p>
-                    <div class="radio-group">
-                        <div class="radio-item" onclick="selectRadio(this, 'learning_ability', 'fast', event)">
-                            <input type="radio" name="learning_ability" value="fast" class="radio-input">
-                            <span>🚀 很快掌握（通常几次示范就能模仿，不到一周就能熟练）</span>
+                <!-- Step 5: 心理与认知 -->
+                <div class="step-page" data-step="5">
+                    <div class="page-header">
+                        <div class="page-icon" style="background: #fff7ed; color: #ea580c;">
+                            <i class="fas fa-brain"></i>
                         </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'learning_ability', 'normal', event)">
-                            <input type="radio" name="learning_ability" value="normal" class="radio-input">
-                            <span>📚 正常速度（需要1-2周反复练习才能掌握基本动作）</span>
+                        <h2 class="page-title">心理与认知</h2>
+                        <p class="page-desc">快速了解孩子的运动心理特征</p>
+                    </div>
+
+                    <div class="slider-container">
+                        <label class="form-label">受教性：被批评时的反应</label>
+                        <div class="slider-labels">
+                            <span class="slider-label left">抵触/不接受</span>
+                            <span class="slider-label right">虚心改正</span>
                         </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'learning_ability', 'slow', event)">
-                            <input type="radio" name="learning_ability" value="slow" class="radio-input">
-                            <span>🐢 学得较慢（需要几周甚至更长时间，需要大量耐心指导）</span>
+                        <input type="range" name="coachability" min="1" max="5" value="3" oninput="updateSliderValue(this)">
+                        <div class="slider-value">3</div>
+                    </div>
+
+                    <div class="slider-container">
+                        <label class="form-label">抗压性：输比赛后的反应</label>
+                        <div class="slider-labels">
+                            <span class="slider-label left">容易放弃</span>
+                            <span class="slider-label right">越挫越勇</span>
+                        </div>
+                        <input type="range" name="resilience" min="1" max="5" value="3" oninput="updateSliderValue(this)">
+                        <div class="slider-value">3</div>
+                    </div>
+
+                    <div class="slider-container">
+                        <label class="form-label">竞争欲：想赢的渴望</label>
+                        <div class="slider-labels">
+                            <span class="slider-label left">佛系/无所谓</span>
+                            <span class="slider-label right">极度渴望胜利</span>
+                        </div>
+                        <input type="range" name="competitiveness" min="1" max="5" value="3" oninput="updateSliderValue(this)">
+                        <div class="slider-value">3</div>
+                    </div>
+
+                    <div class="form-section" style="margin-top: 32px;">
+                        <label class="form-label">联系方式 (用于发送报告)</label>
+                        <input type="text" class="form-input" name="contact" placeholder="微信号或手机号">
+                    </div>
+                </div>
+
+                <!-- 结果页: 公众号引导 -->
+                <div class="step-page" data-step="result">
+                    <div class="result-header">
+                        <div class="result-title">评估已提交</div>
+                        <div class="result-score" id="result-score">--</div>
+                        <div class="result-level" id="result-level">天赋潜力分析中...</div>
+                    </div>
+
+                    <div class="qrcode-card">
+                        <div class="qrcode-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3 class="qrcode-title">评估提交成功！</h3>
+                        <p class="qrcode-desc">请扫码关注公众号，获取完整专业报告</p>
+
+                        <div class="qrcode-image-wrapper">
+                            <img src="images/qrcode.png" alt="公众号二维码" class="qrcode-image">
+                            <p class="qrcode-tip">长按保存二维码，用微信扫一扫</p>
+                        </div>
+
+                        <div class="qrcode-steps">
+                            <div class="qrcode-step">
+                                <div class="qrcode-step-num">1</div>
+                                <div class="qrcode-step-text">扫码关注 <strong>橙风破浪 体优橙长</strong> 公众号</div>
+                            </div>
+                            <div class="qrcode-step">
+                                <div class="qrcode-step-num">2</div>
+                                <div class="qrcode-step-text">发送您的 <strong>小红书用户名</strong></div>
+                            </div>
+                            <div class="qrcode-step">
+                                <div class="qrcode-step-num">3</div>
+                                <div class="qrcode-step-text"><strong>24小时内</strong> 收到专业评估报告</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">💪 面对困难和失败时的反应</label>
-                    <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                        💡 <strong>场景回忆：</strong>想想孩子在运动中遇到困难时（如连续投篮不中、跑步落后、学不会某个动作）的表现。
-                    </p>
-                    <div class="radio-group">
-                        <div class="radio-item" onclick="selectRadio(this, 'challenge_attitude', 'positive', event)">
-                            <input type="radio" name="challenge_attitude" value="positive" class="radio-input">
-                            <span>🔥 越挫越勇（失败后更努力，主动要求再试一次）</span>
-                        </div>
-                        <div class="radio-item"
-                            onclick="selectRadio(this, 'challenge_attitude', 'need_encourage', event)">
-                            <input type="radio" name="challenge_attitude" value="need_encourage" class="radio-input">
-                            <span>🤗 需要鼓励（失败后情绪低落，需要大人安慰和鼓励才能继续）</span>
-                        </div>
-                        <div class="radio-item"
-                            onclick="selectRadio(this, 'challenge_attitude', 'give_up_easily', event)">
-                            <input type="radio" name="challenge_attitude" value="give_up_easily" class="radio-input">
-                            <span>😔 容易放弃（遇到困难就说"我不想玩了"、"太难了"）</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 步骤5: 期望目标 -->
-        <div class="step" data-step="5">
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-target"></i>
-                    </div>
-                    <h2 class="card-title">发展期望</h2>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">运动发展目标</label>
-                    <div class="radio-group">
-                        <div class="radio-item" onclick="selectRadio(this, 'goal', 'health', event)">
-                            <input type="radio" name="goal" value="health" class="radio-input">
-                            <span>🌟 健康成长，增强体质</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'goal', 'hobby', event)">
-                            <input type="radio" name="goal" value="hobby" class="radio-input">
-                            <span>🎯 培养运动爱好</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'goal', 'professional', event)">
-                            <input type="radio" name="goal" value="professional" class="radio-input">
-                            <span>🏆 专业运动发展</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'goal', 'competition', event)">
-                            <input type="radio" name="goal" value="competition" class="radio-input">
-                            <span>🥇 竞技体育道路</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">可投入的时间</label>
-                    <div class="radio-group">
-                        <div class="radio-item" onclick="selectRadio(this, 'time_commitment', 'low', event)">
-                            <input type="radio" name="time_commitment" value="low" class="radio-input">
-                            <span>⏰ 每周1-2小时</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'time_commitment', 'medium', event)">
-                            <input type="radio" name="time_commitment" value="medium" class="radio-input">
-                            <span>⏰ 每周3-5小时</span>
-                        </div>
-                        <div class="radio-item" onclick="selectRadio(this, 'time_commitment', 'high', event)">
-                            <input type="radio" name="time_commitment" value="high" class="radio-input">
-                            <span>⏰ 每周6小时以上</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">联系方式</label>
-                    <input type="tel" class="form-input" placeholder="请输入手机号码" id="phoneNumber">
-                </div>
-            </div>
-        </div>
-
-        <!-- 结果页面 -->
-        <div class="step result-container" data-step="result">
-            <div class="score-card fade-in pulse">
-                <div class="total-score" id="totalScore">85</div>
-                <div class="score-label">综合评估分数</div>
             </div>
 
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-chart-radar"></i>
-                    </div>
-                    <h2 class="card-title">能力雷达图</h2>
-                </div>
-                <div class="chart-container">
-                    <canvas id="radarChart"></canvas>
-                </div>
-            </div>
-
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <h2 class="card-title">推荐运动项目</h2>
-                </div>
-                <ul class="recommendation-list" id="recommendationList">
-                    <!-- 动态生成推荐内容 -->
-                </ul>
-            </div>
-
-            <div class="card fade-in">
-                <div class="card-header">
-                    <div class="card-icon">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <h2 class="card-title">个性化建议</h2>
-                </div>
-                <div id="personalizedAdvice">
-                    <!-- 动态生成建议内容 -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 底部导航 -->
-        <div class="bottom-nav">
-            <button class="btn btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
-                <i class="fas fa-arrow-left"></i> 上一步
-            </button>
-            <button class="btn btn-primary btn-block" id="nextBtn" onclick="nextStep()">
-                下一步 <i class="fas fa-arrow-right"></i>
-            </button>
-            <button class="btn btn-success" id="generateBtn" onclick="generateReport()" style="display: none;">
-        </div>
-    </div>
-    </div>
-    </div>
-
-    <!-- 步骤4: 运动表现 -->
-    <div class="step" data-step="4">
-        <div class="card fade-in">
-            <div class="card-header">
-                <div class="card-icon">
-                    <i class="fas fa-medal"></i>
-                </div>
-                <h2 class="card-title">运动表现</h2>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">参加过的运动训练</label>
-                <div class="checkbox-group">
-                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                        <input type="checkbox" value="swimming_course" class="checkbox-input">
-                        <span>🏊‍♂️ 游泳课程</span>
-                    </div>
-                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                        <input type="checkbox" value="ball_sports" class="checkbox-input">
-                        <span>⚽ 球类运动</span>
-                    </div>
-                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                        <input type="checkbox" value="martial_arts" class="checkbox-input">
-                        <span>🥋 武术/跆拳道</span>
-                    </div>
-                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                        <input type="checkbox" value="dance" class="checkbox-input">
-                        <span>💃 舞蹈</span>
-                    </div>
-                    <div class="checkbox-item" onclick="toggleCheckbox(this, 'training', event)">
-                        <input type="checkbox" value="none" class="checkbox-input">
-                        <span>❌ 暂无系统训练</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">🎯 运动技能学习速度观察</label>
-                <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                    💡 <strong>观察重点：</strong>回忆孩子学习新运动技能（如骑车、跳绳、拍球、游泳）时的表现。
-                </p>
-                <div class="radio-group">
-                    <div class="radio-item" onclick="selectRadio(this, 'learning_ability', 'fast', event)">
-                        <input type="radio" name="learning_ability" value="fast" class="radio-input">
-                        <span>🚀 很快掌握（通常几次示范就能模仿，不到一周就能熟练）</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'learning_ability', 'normal', event)">
-                        <input type="radio" name="learning_ability" value="normal" class="radio-input">
-                        <span>📚 正常速度（需要1-2周反复练习才能掌握基本动作）</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'learning_ability', 'slow', event)">
-                        <input type="radio" name="learning_ability" value="slow" class="radio-input">
-                        <span>🐢 学得较慢（需要几周甚至更长时间，需要大量耐心指导）</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">💪 面对困难和失败时的反应</label>
-                <p class="form-hint" style="color: #64748b; font-size: 14px; margin-bottom: 12px;">
-                    💡 <strong>场景回忆：</strong>想想孩子在运动中遇到困难时（如连续投篮不中、跑步落后、学不会某个动作）的表现。
-                </p>
-                <div class="radio-group">
-                    <div class="radio-item" onclick="selectRadio(this, 'challenge_attitude', 'positive', event)">
-                        <input type="radio" name="challenge_attitude" value="positive" class="radio-input">
-                        <span>🔥 越挫越勇（失败后更努力，主动要求再试一次）</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'challenge_attitude', 'need_encourage', event)">
-                        <input type="radio" name="challenge_attitude" value="need_encourage" class="radio-input">
-                        <span>🤗 需要鼓励（失败后情绪低落，需要大人安慰和鼓励才能继续）</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'challenge_attitude', 'give_up_easily', event)">
-                        <input type="radio" name="challenge_attitude" value="give_up_easily" class="radio-input">
-                        <span>😔 容易放弃（遇到困难就说"我不想玩了"、"太难了"）</span>
-                    </div>
-                </div>
+            <!-- 底部按钮 -->
+            <div class="footer hidden" id="nav-footer">
+                <button class="btn btn-secondary hidden" id="prev-btn" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> 上一步
+                </button>
+                <button class="btn btn-primary" id="next-btn" onclick="nextStep()" disabled>
+                    承诺信息属实，开始评估 <i class="fas fa-arrow-right"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 步骤5: 期望目标 -->
-    <div class="step" data-step="5">
-        <div class="card fade-in">
-            <div class="card-header">
-                <div class="card-icon">
-                    <i class="fas fa-target"></i>
-                </div>
-                <h2 class="card-title">发展期望</h2>
+    <!-- 教程弹窗 -->
+    <div class="modal-overlay hidden" id="help-modal" onclick="closeHelp()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <!-- 弹窗头部 -->
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-title"></h3>
+                <button class="modal-close" onclick="closeHelp()">✕</button>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">运动发展目标</label>
-                <div class="radio-group">
-                    <div class="radio-item" onclick="selectRadio(this, 'goal', 'health', event)">
-                        <input type="radio" name="goal" value="health" class="radio-input">
-                        <span>🌟 健康成长，增强体质</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'goal', 'hobby', event)">
-                        <input type="radio" name="goal" value="hobby" class="radio-input">
-                        <span>🎯 培养运动爱好</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'goal', 'professional', event)">
-                        <input type="radio" name="goal" value="professional" class="radio-input">
-                        <span>🏆 专业运动发展</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'goal', 'competition', event)">
-                        <input type="radio" name="goal" value="competition" class="radio-input">
-                        <span>🥇 竞技体育道路</span>
+            <!-- 弹窗内容 -->
+            <div class="modal-body">
+                <div class="modal-demo" id="modal-demo">
+                    <span class="modal-demo-icon">📺</span>
+                    <span class="modal-demo-text">动作演示 GIF</span>
+                    <span class="modal-demo-hint">(此处循环播放标准动作视频)</span>
+                </div>
+                <div class="modal-steps" id="modal-steps"></div>
+                <div class="modal-tip">
+                    <span class="modal-tip-icon">💡</span>
+                    <div class="modal-tip-content">
+                        <div class="modal-tip-label">专家贴士 (Pro Tip):</div>
+                        <div class="modal-tip-text" id="modal-tip"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">可投入的时间</label>
-                <div class="radio-group">
-                    <div class="radio-item" onclick="selectRadio(this, 'time_commitment', 'low', event)">
-                        <input type="radio" name="time_commitment" value="low" class="radio-input">
-                        <span>⏰ 每周1-2小时</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'time_commitment', 'medium', event)">
-                        <input type="radio" name="time_commitment" value="medium" class="radio-input">
-                        <span>⏰ 每周3-5小时</span>
-                    </div>
-                    <div class="radio-item" onclick="selectRadio(this, 'time_commitment', 'high', event)">
-                        <input type="radio" name="time_commitment" value="high" class="radio-input">
-                        <span>⏰ 每周6小时以上</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">联系方式</label>
-                <input type="tel" class="form-input" placeholder="请输入手机号码" id="phoneNumber">
+            <!-- 弹窗底部 -->
+            <div class="modal-footer">
+                <button class="btn btn-primary" style="width: 100%;" onclick="closeHelp()">
+                    明白了
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 结果页面 -->
-    <div class="step result-container" data-step="result">
-        <div class="score-card fade-in pulse">
-            <div class="total-score" id="totalScore">85</div>
-            <div class="score-label">综合评估分数</div>
-        </div>
+    <script>
+        // ============ 全局状态 ============
+        let currentStep = 0;  // 从首页开始
+        const totalSteps = 5;
 
-        <div class="card fade-in">
-            <div class="card-header">
-                <div class="card-icon">
-                    <i class="fas fa-chart-radar"></i>
-                </div>
-                <h2 class="card-title">能力雷达图</h2>
-            </div>
-            <div class="chart-container">
-                <canvas id="radarChart"></canvas>
-            </div>
-        </div>
+        // ============ 首页启动 ============
+        function startAssessment() {
+            setStep(1);
+        }
+        let formData = {
+            safety: {},
+            father: { trait: 'balanced' },
+            mother: { trait: 'balanced' },
+            grandparents: {
+                paternal_grandfather: { height: null, trait: 'none' },
+                paternal_grandmother: { height: null, trait: 'none' },
+                maternal_grandfather: { height: null, trait: 'none' },
+                maternal_grandmother: { height: null, trait: 'none' }
+            },
+            traits: {},
+            child: {},
+            tests: { sprintSkipped: false },
+            mindset: {},
+            contact: ''
+        };
+        let heartBlocked = false;
 
-        <div class="card fade-in">
-            <div class="card-header">
-                <div class="card-icon">
-                    <i class="fas fa-trophy"></i>
-                </div>
-                <h2 class="card-title">推荐运动项目</h2>
-            </div>
-            <ul class="recommendation-list" id="recommendationList">
-                <!-- 动态生成推荐内容 -->
-            </ul>
-        </div>
+        // ============ 步骤导航 ============
+        function nextStep() {
+            if (heartBlocked) return;
 
-        <div class="card fade-in">
-            <div class="card-header">
-                <div class="card-icon">
-                    <i class="fas fa-lightbulb"></i>
-                </div>
-                <h2 class="card-title">个性化建议</h2>
-            </div>
-            <div id="personalizedAdvice">
-                <!-- 动态生成建议内容 -->
-            </div>
-        </div>
-    </div>
+            saveCurrentStepData();
 
-    <!-- 底部导航 -->
-    <div class="bottom-nav">
-        <button class="btn btn-secondary" id="prevBtn" onclick="previousStep()" style="display: none;">
-            <i class="fas fa-arrow-left"></i> 上一步
-        </button>
-        <button class="btn btn-primary btn-block" id="nextBtn" onclick="nextStep()">
-            下一步 <i class="fas fa-arrow-right"></i>
-        </button>
-        <button class="btn btn-success" id="generateBtn" onclick="generateReport()" style="display: none;">
-            <i class="fas fa-download"></i> 生成报告
-        </button>
-    </div>
-    </div>
+            if (currentStep < totalSteps) {
+                setStep(currentStep + 1);
+            } else {
+                submitAssessment();
+            }
+        }
 
-    <script type="module" src="/src/js/app.ts"></script>
+        function prevStep() {
+            if (currentStep > 0) {
+                setStep(currentStep - 1);
+            }
+        }
+
+        function setStep(step) {
+            // 隐藏当前页面
+            document.querySelectorAll('.step-page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // 显示目标页面
+            const targetPage = document.querySelector(`.step-page[data-step="${step}"]`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // 处理首页模式（隐藏/显示进度条）
+            const header = document.getElementById('main-header');
+            if (step === 0) {
+                header.classList.add('landing-mode');
+            } else {
+                header.classList.remove('landing-mode');
+            }
+
+            // 更新进度条
+            document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+                dot.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    dot.classList.add('completed');
+                } else if (index + 1 === step) {
+                    dot.classList.add('active');
+                }
+            });
+
+            currentStep = step;
+            updateNavButtons();
+        }
+
+        function updateNavButtons() {
+            const footer = document.getElementById('nav-footer');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+
+            // 首页时隐藏整个导航栏
+            if (currentStep === 0) {
+                footer.classList.add('hidden');
+                return;
+            } else {
+                footer.classList.remove('hidden');
+            }
+
+            // 上一步按钮（Step 1 时显示返回首页）
+            if (currentStep >= 1) {
+                prevBtn.classList.remove('hidden');
+                if (currentStep === 1) {
+                    prevBtn.innerHTML = '<i class="fas fa-home"></i> 返回首页';
+                } else {
+                    prevBtn.innerHTML = '<i class="fas fa-arrow-left"></i> 上一步';
+                }
+            } else {
+                prevBtn.classList.add('hidden');
+            }
+
+            // 下一步按钮
+            if (currentStep === 1) {
+                nextBtn.innerHTML = '承诺信息属实，开始评估 <i class="fas fa-arrow-right"></i>';
+                nextBtn.classList.remove('btn-success');
+                nextBtn.classList.add('btn-primary');
+            } else if (currentStep === totalSteps) {
+                nextBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 提交评估';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-success');
+            } else {
+                nextBtn.innerHTML = '下一步 <i class="fas fa-arrow-right"></i>';
+                nextBtn.classList.remove('btn-success');
+                nextBtn.classList.add('btn-primary');
+            }
+
+            updateNextButton();
+        }
+
+        function updateNextButton() {
+            const nextBtn = document.getElementById('next-btn');
+
+            // 首页不处理
+            if (currentStep === 0) return;
+
+            if (currentStep === 1) {
+                const consent = document.getElementById('consent-input');
+                nextBtn.disabled = !consent.checked || heartBlocked;
+            } else {
+                nextBtn.disabled = heartBlocked;
+            }
+        }
+
+        // ============ 安全检查 ============
+        function handleSafetyCheck(checkbox, type) {
+            const conditionTypes = ['heart', 'asthma', 'allergy', 'injury'];
+            const healthyCheckbox = document.querySelector('input[name="safety_healthy"]');
+            const healthyCheck = document.getElementById('healthy-check');
+
+            // 互斥逻辑：点击"身体健康"清空所有病症，点击任意病症清空"身体健康"
+            if (type === 'healthy' && checkbox.checked) {
+                // 点击身体健康时，清空所有病症选项
+                conditionTypes.forEach(condType => {
+                    const condCheckbox = document.querySelector(`input[name="safety_${condType}"]`);
+                    if (condCheckbox) {
+                        condCheckbox.checked = false;
+                        formData.safety[condType] = false;
+                    }
+                });
+                // 特殊处理：清空心脏问题的警告状态
+                const heartAlert = document.getElementById('heart-alert');
+                const heartCheck = document.getElementById('heart-check');
+                heartAlert.classList.add('hidden');
+                heartCheck.classList.remove('checked');
+                heartBlocked = false;
+                // 添加健康选中样式
+                healthyCheck.classList.add('checked');
+            } else if (conditionTypes.includes(type) && checkbox.checked) {
+                // 点击任意病症时，取消"身体健康"的选中
+                if (healthyCheckbox) {
+                    healthyCheckbox.checked = false;
+                    formData.safety.healthy = false;
+                    healthyCheck.classList.remove('checked');
+                }
+            }
+
+            // 取消健康选项时移除样式
+            if (type === 'healthy' && !checkbox.checked) {
+                healthyCheck.classList.remove('checked');
+            }
+
+            // 心脏问题特殊处理（红线阻断）
+            if (type === 'heart') {
+                const alert = document.getElementById('heart-alert');
+                const checkItem = document.getElementById('heart-check');
+
+                if (checkbox.checked) {
+                    alert.classList.remove('hidden');
+                    checkItem.classList.add('checked');
+                    heartBlocked = true;
+                } else {
+                    alert.classList.add('hidden');
+                    checkItem.classList.remove('checked');
+                    heartBlocked = false;
+                }
+            }
+
+            updateNextButton();
+            formData.safety[type] = checkbox.checked;
+        }
+
+        // ============ 选项选择 ============
+        function selectOption(element, name, value) {
+            // 移除同组其他选中状态
+            const parent = element.parentElement;
+            parent.querySelectorAll('.card-select').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // 选中当前
+            element.classList.add('selected');
+
+            // 保存数据
+            if (['explosive', 'endurance', 'coordination'].includes(name)) {
+                formData.traits[name] = value;
+            } else {
+                formData.safety[name] = value;
+            }
+        }
+
+        function selectBodyType(element, parent, value) {
+            // 移除同组其他选中状态
+            const container = element.parentElement;
+            container.querySelectorAll('.body-type-card').forEach(card => {
+                card.classList.remove('selected-orange', 'selected-pink');
+            });
+
+            // 选中当前
+            if (parent === 'father') {
+                element.classList.add('selected-orange');
+                formData.father.bodyType = value;
+            } else {
+                element.classList.add('selected-pink');
+                formData.mother.bodyType = value;
+            }
+        }
+
+        // 切换祖父母信息展开/收起
+        function toggleGrandparents() {
+            const section = document.getElementById('grandparents-section');
+            const btn = document.getElementById('gp-toggle-btn');
+
+            if (section.classList.contains('collapsed')) {
+                section.classList.remove('collapsed');
+                btn.textContent = '收起';
+            } else {
+                section.classList.add('collapsed');
+                btn.textContent = '展开';
+            }
+        }
+
+        function selectTrait(element, parent, value) {
+            // 移除同组其他选中状态
+            const container = element.parentElement;
+            container.querySelectorAll('.trait-card').forEach(card => {
+                card.classList.remove('selected-orange', 'selected-pink');
+                card.querySelector('.trait-check').style.display = 'none';
+            });
+
+            // 选中当前
+            if (parent === 'father') {
+                element.classList.add('selected-orange');
+                formData.father.trait = value;
+            } else {
+                element.classList.add('selected-pink');
+                formData.mother.trait = value;
+            }
+            element.querySelector('.trait-check').style.display = 'block';
+        }
+
+        function selectGender(element, value) {
+            document.querySelectorAll('.gender-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            formData.child.gender = value;
+        }
+
+        // ============ 冲刺测试切换 ============
+        function toggleSprintTest() {
+            const card = document.getElementById('sprint-card');
+            const inputArea = document.getElementById('sprint-input-area');
+            const skipMsg = document.getElementById('sprint-skip-msg');
+            const toggleText = document.getElementById('sprint-toggle-text');
+
+            if (formData.tests.sprintSkipped) {
+                // 恢复测试
+                card.classList.remove('skipped');
+                inputArea.classList.remove('hidden');
+                skipMsg.classList.add('hidden');
+                toggleText.textContent = '无场地？跳过';
+                formData.tests.sprintSkipped = false;
+            } else {
+                // 跳过测试
+                card.classList.add('skipped');
+                inputArea.classList.add('hidden');
+                skipMsg.classList.remove('hidden');
+                toggleText.textContent = '有场地？恢复';
+                formData.tests.sprintSkipped = true;
+            }
+        }
+
+        // ============ 教程弹窗 ============
+        const helpContent = {
+            balance: {
+                title: "闭眼单脚站立 (Stork Test)",
+                color: "#a855f7",
+                image: "images/stork-test.png",
+                steps: [
+                    "1. 双手叉腰，闭上双眼。",
+                    "2. 抬起一只脚，将脚底贴在另一条腿的膝盖内侧。",
+                    "3. 保持平衡，脚跟离地即可开始计时。",
+                    "4. 当手离开腰或脚落地时，停止计时。"
+                ],
+                tip: "这是测试核心稳定性的黄金动作。超过 30秒 为优秀。"
+            },
+            tapping: {
+                title: "双手快速击打 (Plate Tapping)",
+                color: "#f97316",
+                image: "images/tapping.png",
+                steps: [
+                    "1. 在桌上放两张纸（或杯垫），圆心间隔 60cm。",
+                    "2. 非惯用手按在两纸中间不动。",
+                    "3. 惯用手快速来回触碰两张纸。",
+                    "4. 记录 20秒内 碰到了多少次（一来一回算2次）。"
+                ],
+                tip: "测试神经传导速度。超过 40次 为优秀。"
+            },
+            jump: {
+                title: "立定跳远标准",
+                color: "#f97316",
+                image: "images/jump.png",
+                steps: [
+                    "1. 双脚自然分开，脚尖不得踩线。",
+                    "2. 预摆时双臂高举，起跳时用力蹬地。",
+                    "3. 测量起跳线到最近着地点（通常是脚后跟）的距离。",
+                    "4. 建议测 2-3 次，取最好成绩。"
+                ],
+                tip: "爆发力核心指标。注意防滑，确保安全。"
+            },
+            flexibility: {
+                title: "坐位体前屈标准",
+                color: "#10b981",
+                image: "images/flexibility.png",
+                steps: [
+                    "1. 坐在地上，双腿伸直并拢，脚尖朝上。",
+                    "2. 双手叠放，掌心朝下。",
+                    "3. 上身慢慢前倾，双手沿腿面向脚尖方向滑动。",
+                    "4. 测量指尖超过脚尖的距离（超过为正，不及为负）。"
+                ],
+                tip: "柔韧性指标。建议热身后测试，成绩更准确。"
+            }
+        };
+
+        function showHelp(type) {
+            const modal = document.getElementById('help-modal');
+            const content = helpContent[type];
+            const demoEl = document.getElementById('modal-demo');
+
+            document.getElementById('modal-title').textContent = content.title;
+
+            // 如果有图片，显示全宽圆角矩形背景的图片；否则显示占位符
+            if (content.image) {
+                demoEl.classList.add('has-image');
+                demoEl.innerHTML = `<img src="${content.image}" alt="${content.title}">`;
+            } else {
+                demoEl.classList.remove('has-image');
+                demoEl.innerHTML = `
+                    <span class="modal-demo-icon">📺</span>
+                    <span class="modal-demo-text">动作演示 GIF</span>
+                    <span class="modal-demo-hint">(此处循环播放标准动作视频)</span>
+                `;
+                demoEl.style.background = content.color;
+            }
+
+            document.getElementById('modal-steps').innerHTML = content.steps.map(s =>
+                `<div class="modal-step">${s}</div>`
+            ).join('');
+            document.getElementById('modal-tip').innerHTML = content.tip;
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeHelp() {
+            document.getElementById('help-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // ============ 滑块更新 ============
+        function updateSliderValue(slider) {
+            const valueDisplay = slider.nextElementSibling;
+            valueDisplay.textContent = slider.value;
+            formData.mindset[slider.name] = parseInt(slider.value);
+        }
+
+        // ============ 数据保存 ============
+        function saveCurrentStepData() {
+            const inputs = document.querySelectorAll(`.step-page[data-step="${currentStep}"] input, .step-page[data-step="${currentStep}"] select`);
+
+            inputs.forEach(input => {
+                if (input.type === 'range') return; // 已单独处理
+
+                const name = input.name;
+                const value = input.value;
+
+                // 处理祖父母身高输入
+                if (name.endsWith('_height') && (name.includes('grandfather') || name.includes('grandmother'))) {
+                    const gpKey = name.replace('_height', '');
+                    if (formData.grandparents[gpKey]) {
+                        formData.grandparents[gpKey].height = value ? parseInt(value) : null;
+                    }
+                    return;
+                }
+
+                // 处理祖父母特长下拉框
+                if (name.endsWith('_trait') && (name.includes('grandfather') || name.includes('grandmother'))) {
+                    const gpKey = name.replace('_trait', '');
+                    if (formData.grandparents[gpKey]) {
+                        formData.grandparents[gpKey].trait = value || 'none';
+                    }
+                    return;
+                }
+
+                if (input.type === 'checkbox') return; // 其他复选框已单独处理
+
+                if (!name || !value) return;
+
+                // 根据字段名分类存储
+                if (name.startsWith('father_')) {
+                    formData.father[name.replace('father_', '')] = value;
+                } else if (name.startsWith('mother_')) {
+                    formData.mother[name.replace('mother_', '')] = value;
+                } else if (name.startsWith('child_') || ['birth_date', 'arm_span', 'sitting_height'].includes(name)) {
+                    formData.child[name] = value;
+                } else if (['standing_jump', 'balance_time', 'tapping_count', 'flexibility', 'sprint_time'].includes(name)) {
+                    formData.tests[name] = value;
+                } else if (name === 'contact') {
+                    formData.contact = value;
+                }
+            });
+
+            console.log('Current form data:', formData);
+        }
+
+        // ============ EmailJS 配置 ============
+        // 请在 https://www.emailjs.com/ 注册并获取以下信息
+        const EMAILJS_CONFIG = {
+            publicKey: 'Uf9FaeQxB9g0JJuXQ',
+            serviceId: 'service_uhau3hl',
+            templateId: 'template_x0y6h4c',
+            toEmail: 'yaoelves06@gmail.com'
+        };
+
+        // 初始化 EmailJS
+        if (typeof emailjs !== 'undefined' && EMAILJS_CONFIG.publicKey !== 'YOUR_PUBLIC_KEY') {
+            emailjs.init(EMAILJS_CONFIG.publicKey);
+        }
+
+        // ============ 提交评估 ============
+        function submitAssessment() {
+            saveCurrentStepData();
+
+            // 计算简单评分
+            const score = calculateScore();
+
+            // 显示结果页
+            setStep('result');
+            document.getElementById('result-score').textContent = score;
+            document.getElementById('result-level').textContent = getScoreLevel(score);
+
+            // 隐藏导航按钮
+            document.getElementById('prev-btn').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+
+            // 发送邮件通知
+            sendEmailNotification(formData, score);
+        }
+
+        // ============ 生成计算器直达链接 ============
+        function generateCalculatorLink(data) {
+            // 提取计算器需要的数据
+            const calcData = {
+                g: data.child.gender === 'male' ? 'm' : 'f',  // gender
+                ch: data.child.child_height || '',             // child height
+                as: data.child.arm_span || '',                 // arm span
+                fh: data.father.height || '',                  // father height
+                mh: data.mother.height || '',                  // mother height
+                ft: data.father.trait || 'balanced',           // father trait
+                mt: data.mother.trait || 'balanced',           // mother trait
+                gp: countGrandparentAthletes(data.grandparents), // grandparent athletes count
+                sj: data.tests.standing_jump || '',            // standing jump
+                fl: data.tests.flexibility || '',              // flexibility
+                bt: data.tests.balance_time || '',             // balance time
+                st: data.tests.sprint_time || '',              // sprint time
+                rt: '',                                        // reaction test (not in form yet)
+                co: data.mindset.coachability || 3,            // coachability
+                re: data.mindset.resilience || 3,              // resilience
+                cp: data.mindset.competitiveness || 3,         // competitiveness
+                ct: data.contact || ''                         // contact info
+            };
+
+            // 转换为 JSON 并 Base64 编码
+            const jsonStr = JSON.stringify(calcData);
+            const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+
+            // 生成完整链接（使用当前域名）
+            const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+            return `${baseUrl}calculator.html?d=${base64}`;
+        }
+
+        // 统计有运动特长的祖父母人数
+        function countGrandparentAthletes(gp) {
+            let count = 0;
+            const checkGP = (person) => {
+                if (person && person.trait && person.trait !== 'none') count++;
+            };
+            checkGP(gp.paternal_grandfather);
+            checkGP(gp.paternal_grandmother);
+            checkGP(gp.maternal_grandfather);
+            checkGP(gp.maternal_grandmother);
+            return count;
+        }
+
+        // ============ 发送邮件通知 ============
+        async function sendEmailNotification(data, score) {
+            try {
+                // 格式化祖父母信息
+                const formatGP = (gp) => {
+                    if (!gp.height && gp.trait === 'none') return '未填写';
+                    const traitMap = { none: '', tall: '高大', explosive: '爆发力', strong: '力量型', athletic: '运动型' };
+                    return `${gp.height || '?'}cm ${traitMap[gp.trait] || ''}`.trim();
+                };
+
+                // 格式化特质
+                const traitMap = { balanced: '均衡', speed: '爆发力', endurance: '耐力', coord: '协调性' };
+
+                // 生成计算器直达链接
+                const calculatorLink = generateCalculatorLink(data);
+
+                const templateParams = {
+                    // 联系方式
+                    contact: data.contact || '未填写',
+
+                    // 父母信息
+                    father_height: data.father.height || '未填写',
+                    father_trait: traitMap[data.father.trait] || '均衡',
+                    mother_height: data.mother.height || '未填写',
+                    mother_trait: traitMap[data.mother.trait] || '均衡',
+
+                    // 祖父母信息
+                    gp_paternal_grandfather: formatGP(data.grandparents.paternal_grandfather),
+                    gp_paternal_grandmother: formatGP(data.grandparents.paternal_grandmother),
+                    gp_maternal_grandfather: formatGP(data.grandparents.maternal_grandfather),
+                    gp_maternal_grandmother: formatGP(data.grandparents.maternal_grandmother),
+
+                    // 儿童信息
+                    child_gender: data.child.gender === 'male' ? '男' : '女',
+                    birth_date: data.child.birth_date || '未填写',
+                    child_height: data.child.child_height || '未填写',
+                    child_weight: data.child.child_weight || '未填写',
+                    arm_span: data.child.arm_span || '未填写',
+
+                    // 测试数据
+                    standing_jump: data.tests.standing_jump || '未填写',
+                    flexibility: data.tests.flexibility || '未填写',
+                    balance_time: data.tests.balance_time || '未测',
+                    tapping_count: data.tests.tapping_count || '未测',
+                    sprint_time: data.tests.sprint_time || '未测',
+                    sprint_skipped: data.tests.sprintSkipped ? '已跳过' : '',
+
+                    // 心理评分
+                    coachability: data.mindset.coachability || '未评',
+                    resilience: data.mindset.resilience || '未评',
+                    competitiveness: data.mindset.competitiveness || '未评',
+
+                    // 提交时间
+                    submit_time: new Date().toLocaleString('zh-CN'),
+
+                    // 计算器直达链接
+                    calculator_link: calculatorLink
+                };
+
+                const response = await emailjs.send(
+                    EMAILJS_CONFIG.serviceId,
+                    EMAILJS_CONFIG.templateId,
+                    templateParams
+                );
+
+                console.log('邮件发送成功:', response);
+            } catch (error) {
+                console.error('邮件发送失败:', error);
+                alert('提交时遇到问题，请稍后重试或直接联系我们');
+            }
+        }
+
+        // 格式化辅助函数
+        function formatBodyType(type) {
+            const map = { ecto: '精瘦型', meso: '肌肉型', endo: '壮实型' };
+            return map[type] || '未选择';
+        }
+
+        function formatAthleticLevel(level) {
+            const map = { pro: '职业运动员', school: '校队', amateur: '业余爱好', none: '无' };
+            return map[level] || '未选择';
+        }
+
+        function formatTraitLevel(level) {
+            const map = { top: '优秀', good: '良好', normal: '一般' };
+            return map[level] || '未选择';
+        }
+
+        function calculateScore() {
+            let score = 60;
+
+            // 遗传加分
+            if (formData.father.bodyType === 'meso') score += 8;
+            if (formData.mother.bodyType === 'meso') score += 8;
+            if (formData.father.athletic === 'pro') score += 10;
+            if (formData.mother.athletic === 'pro') score += 10;
+
+            // 爆发力/耐力/协调加分
+            if (formData.traits.explosive === 'top') score += 5;
+            if (formData.traits.endurance === 'top') score += 5;
+            if (formData.traits.coordination === 'top') score += 5;
+
+            // 实测加分
+            const jump = parseFloat(formData.tests.standing_jump) || 0;
+            if (jump > 150) score += 10;
+            else if (jump > 120) score += 5;
+
+            // 心理加分
+            const mindTotal = (formData.mindset.coachability || 3) +
+                             (formData.mindset.resilience || 3) +
+                             (formData.mindset.competitiveness || 3);
+            score += Math.floor(mindTotal / 3);
+
+            return Math.min(100, Math.max(0, score));
+        }
+
+        function getScoreLevel(score) {
+            if (score >= 85) return 'Tier 1 精英潜力';
+            if (score >= 70) return 'Tier 2 竞技储备';
+            if (score >= 55) return 'Tier 3 兴趣培养';
+            return 'Tier 4 基础发展';
+        }
+
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', function() {
+            updateNavButtons();
+
+            // 初始化滑块值
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+                formData.mindset[slider.name] = parseInt(slider.value);
+            });
+        });
+    </script>
 </body>
-
 </html>

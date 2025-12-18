@@ -1,655 +1,612 @@
 /**
- * 运动天赋评估评分引擎 - TypeScript版本
- * 纯函数实现，输入 AssessmentInput，输出 AssessmentResult
+ * FutureStars ID v6.0 评分引擎
+ * 基于 PRD v6.0 设计，支持家庭实测场景
  */
 
-import {
-    AssessmentInput,
-    AssessmentResult,
-    DimensionScores,
-    DetailedScores,
-    PathwayLevel,
-    SportType,
-    FamilyInfo,
-    ParentInfo,
-    BasicSkills,
-    SpecialtyInfo,
-    PhysicalInfo,
-    PsychologyInfo,
-    ScoringConfig
-} from './types';
+// ============ 类型定义 ============
 
-import { DEFAULT_SCORING_CONFIG } from './scoring.config';
+export interface SafetyCheck {
+    heartCondition: boolean;  // 心脏问题（红线）
+    asthma: boolean;          // 哮喘
+    allergies: string[];      // 过敏史
+    injuries: string[];       // 骨骼/关节损伤
+    vision: 'normal' | 'glasses' | 'contacts';
+}
 
-// === 主评估函数 ===
+export type BodyType = 'ecto' | 'meso' | 'endo';
+export type AthleticLevel = 'pro' | 'school' | 'amateur' | 'none';
+export type TraitLevel = 'top' | 'good' | 'normal';
+
+export interface ParentProfile {
+    height: number;
+    bodyType: BodyType;
+    athleticLevel: AthleticLevel;
+}
+
+export interface InheritedTraits {
+    explosive: TraitLevel;    // 爆发力（短跑/弹跳）
+    endurance: TraitLevel;    // 耐力
+    coordination: TraitLevel; // 协调性
+}
+
+export interface ChildProfile {
+    gender: 'male' | 'female';
+    birthDate: string;        // YYYY-MM 格式
+    height: number;           // cm
+    weight: number;           // kg
+    armSpan: number;          // 臂展 cm（必填）
+    sittingHeight?: number;   // 坐高 cm（选填）
+}
+
+export interface HomeTests {
+    standingJump: number;     // 立定跳远 cm（必测）
+    balanceTime?: number;     // 闭眼单脚站 秒（二选一）
+    tappingCount?: number;    // 20秒击打次数（二选一）
+    flexibility: number;      // 坐位体前屈 cm（必测）
+    sprintTime?: number;      // 30米冲刺 秒（选测）
+    sprintSkipped: boolean;   // 是否跳过冲刺
+}
+
+export interface MindsetProfile {
+    coachability: number;     // 受教性 1-5
+    resilience: number;       // 抗压性 1-5
+    competitiveness: number;  // 竞争欲 1-5
+}
+
+export interface AssessmentInput {
+    safety: SafetyCheck;
+    father: ParentProfile;
+    mother: ParentProfile;
+    traits: InheritedTraits;
+    child: ChildProfile;
+    tests: HomeTests;
+    mindset: MindsetProfile;
+    contact: string;
+}
+
+export type TierLevel = 'tier1' | 'tier2' | 'tier3' | 'tier4';
+
+export interface SportRecommendation {
+    name: string;
+    nameEn: string;
+    matchScore: number;
+    reason: string;
+    icon: string;
+}
+
+export interface AssessmentResult {
+    // 安全状态
+    safetyPassed: boolean;
+    safetyWarnings: string[];
+
+    // 核心指标
+    apeIndex: number;           // 臂展 - 身高
+    predictedHeight: number;    // 预测成年身高
+    predictedHeightRange: [number, number]; // 预测范围
+
+    // 五维得分 (0-100)
+    scores: {
+        speed: number;          // 速度
+        power: number;          // 爆发力
+        coordination: number;   // 协调/灵敏
+        genetic: number;        // 遗传潜力
+        mindset: number;        // 心理韧性
+    };
+
+    // 综合评估
+    overallScore: number;
+    tierLevel: TierLevel;
+    tierLabel: string;
+
+    // 推荐项目
+    recommendations: SportRecommendation[];
+
+    // 元数据
+    speedIsProjected: boolean;  // 速度是否为推算值
+    timestamp: string;
+}
+
+// ============ 常量配置 ============
+
+const CONFIG = {
+    // 体型与运动能力关联
+    bodyTypeTraits: {
+        ecto: { agility: 10, endurance: 10, power: -5, strength: -5 },
+        meso: { power: 15, speed: 15, agility: 5, strength: 10 },
+        endo: { strength: 15, stability: 10, power: 5, agility: -5 }
+    },
+
+    // 竞技水平加分
+    athleticLevelBonus: {
+        pro: 20,
+        school: 12,
+        amateur: 6,
+        none: 0
+    },
+
+    // 遗传特质加分
+    traitBonus: {
+        top: 15,
+        good: 8,
+        normal: 0
+    },
+
+    // 立定跳远评分标准 (cm -> 分数)
+    jumpScoring: {
+        male: [
+            { min: 200, score: 100 },
+            { min: 180, score: 90 },
+            { min: 160, score: 80 },
+            { min: 140, score: 70 },
+            { min: 120, score: 60 },
+            { min: 100, score: 50 },
+            { min: 0, score: 40 }
+        ],
+        female: [
+            { min: 180, score: 100 },
+            { min: 160, score: 90 },
+            { min: 140, score: 80 },
+            { min: 120, score: 70 },
+            { min: 100, score: 60 },
+            { min: 80, score: 50 },
+            { min: 0, score: 40 }
+        ]
+    },
+
+    // 30米冲刺评分 (秒 -> 分数，越小越好)
+    sprintScoring: {
+        baseline: 4.5, // 基准时间（秒）
+        multiplier: 20  // 每超过0.1秒扣多少分
+    },
+
+    // Tier 等级阈值
+    tierThresholds: {
+        tier1: 85,  // 精英潜力
+        tier2: 70,  // 竞技储备
+        tier3: 55,  // 兴趣培养
+        tier4: 0    // 基础发展
+    },
+
+    // 身高预测参数
+    heightPrediction: {
+        maleMultiplier: 1.0,
+        femaleMultiplier: 0.923,
+        geneticWeight: 0.7,
+        environmentWeight: 0.3
+    }
+};
+
+// ============ 核心评分函数 ============
 
 /**
- * 运动天赋评估核心函数
- * @param input - 评估输入数据
- * @param config - 评分配置（可选，使用默认配置）
- * @returns 评估结果
+ * 主评估函数
  */
-export function evaluate(input: AssessmentInput, config: Partial<ScoringConfig> = {}): AssessmentResult {
-    // 合并配置
-    const cfg = { ...DEFAULT_SCORING_CONFIG, ...config } as ScoringConfig;
+export function evaluate(input: AssessmentInput): AssessmentResult {
+    // 1. 安全检查
+    const { passed: safetyPassed, warnings: safetyWarnings } = checkSafety(input.safety);
 
-    // 计算各维度详细得分
-    const details = calculateDetails(input, cfg);
+    // 2. 计算 Ape Index
+    const apeIndex = calculateApeIndex(input.child);
 
-    // 计算各维度总分（应用上限控制）
-    const scores = calculateDimensionScores(details, cfg);
+    // 3. 预测成年身高
+    const { predicted, range } = predictAdultHeight(input);
 
-    // 计算综合得分
-    const overall = calculateOverallScore(scores, cfg);
+    // 4. 计算五维得分
+    const scores = calculateDimensionScores(input);
 
-    // 判定路径等级
-    const pathway = determinePathway(overall, cfg);
+    // 5. 计算综合得分
+    const overallScore = calculateOverallScore(scores);
 
-    // 生成项目推荐
-    const suitableSports = recommendSports(input, scores, details, cfg);
+    // 6. 确定 Tier 等级
+    const { level: tierLevel, label: tierLabel } = determineTier(overallScore);
 
-    // 生成建议列表
-    const recommendations = generateRecommendations(scores, pathway, input, cfg);
+    // 7. 生成运动推荐
+    const recommendations = generateRecommendations(scores, apeIndex, input);
 
     return {
+        safetyPassed,
+        safetyWarnings,
+        apeIndex,
+        predictedHeight: predicted,
+        predictedHeightRange: range,
         scores,
-        overall,
-        pathway,
+        overallScore,
+        tierLevel,
+        tierLabel,
         recommendations,
-        suitableSports,
-        details,
+        speedIsProjected: input.tests.sprintSkipped,
         timestamp: new Date().toISOString()
     };
 }
 
-// === 详细得分计算 ===
-
-export function calculateDetails(input: AssessmentInput, cfg: ScoringConfig): DetailedScores {
-    return {
-        genetic: calculateGeneticDetails(input, cfg),
-        current: calculateCurrentDetails(input, cfg),
-        specialty: calculateSpecialtyDetails(input, cfg),
-        physical: calculatePhysicalDetails(input, cfg),
-        psychology: calculatePsychologyDetails(input, cfg)
-    };
-}
-
-// 遗传潜力详细得分
-function calculateGeneticDetails(input: AssessmentInput, cfg: ScoringConfig) {
-    const heightGenes = calculateHeightGenesScore(input.family, cfg);
-    const parentSports = calculateParentSportsScore(input.parents, cfg);
-
-    return {
-        heightGenes: Math.min(heightGenes, cfg.limits.genetic.heightGenes),
-        parentSports: Math.min(parentSports, cfg.limits.genetic.parentSports)
-    };
-}
-
-// 当前能力详细得分  
-function calculateCurrentDetails(input: AssessmentInput, cfg: ScoringConfig) {
-    const basicSkills = calculateBasicSkillsScore(input.development.basicSkills, cfg);
-    const frequency = cfg.frequencyScores[input.development.frequency] || 0;
-    const interests = calculateInterestsScore(input.development.interests, cfg);
-
-    return {
-        basicSkills: Math.min(basicSkills, cfg.limits.current.basicSkills),
-        frequency: Math.min(frequency, cfg.limits.current.frequency),
-        interests: Math.min(interests, cfg.limits.current.interests)
-    };
-}
-
-// 专项技能详细得分
-function calculateSpecialtyDetails(input: AssessmentInput, cfg: ScoringConfig) {
-    const aquatic = calculateAquaticScore(input.specialty.aquatic, input.development.interests, cfg);
-    const ball = calculateBallScore(input.specialty.ball, input.development.interests, cfg);
-    const track = calculateTrackScore(input.specialty.track, input.development.basicSkills, input.development.interests, cfg);
-    const tech = calculateTechScore(input.specialty.tech, input.observed.highlights, input.parents, cfg);
-
-    return {
-        aquatic: Math.min(aquatic, cfg.limits.specialty.aquatic),
-        ball: Math.min(ball, cfg.limits.specialty.ball),
-        track: Math.min(track, cfg.limits.specialty.track),
-        tech: Math.min(tech, cfg.limits.specialty.tech)
-    };
-}
-
-// 身体优势详细得分
-function calculatePhysicalDetails(input: AssessmentInput, cfg: ScoringConfig) {
-    const bodyType = cfg.bodyTypeScores[input.physical.health.bodyType] || 0;
-    const strengths = calculateStrengthsScore(input.physical.strengths, cfg);
-    const health = calculateHealthScore(input.physical.health, cfg);
-
-    return {
-        bodyType: Math.min(bodyType, cfg.limits.physical.bodyType),
-        strengths: Math.min(strengths, cfg.limits.physical.strengths),
-        health: Math.max(health, -cfg.limits.physical.health) // 健康是扣分项，限制扣分上限
-    };
-}
-
-// 心理特征详细得分
-function calculatePsychologyDetails(input: AssessmentInput, cfg: ScoringConfig) {
-    const traits = calculateTraitsScore(input.psychology.traits, cfg);
-    const resilience = cfg.resilienceScores[input.psychology.response] || 0;
-    const teamwork = cfg.teamworkScores[input.psychology.teamwork] || 0;
-
-    return {
-        traits: Math.min(traits, cfg.limits.psychology.traits),
-        resilience: Math.min(resilience, cfg.limits.psychology.resilience),
-        teamwork: Math.min(teamwork, cfg.limits.psychology.teamwork)
-    };
-}
-
-// === 具体评分计算函数 ===
-
-// 身高基因得分
-function calculateHeightGenesScore(family: FamilyInfo, cfg: ScoringConfig): number {
-    let score = 0;
-
-    // 父亲身高评分
-    if (family.father) {
-        const fatherRange = cfg.heightScoring.fatherRanges.find(
-            r => family.father >= r.min && family.father <= r.max
-        );
-        score += fatherRange ? fatherRange.score : 0;
-    }
-
-    // 母亲身高评分  
-    if (family.mother) {
-        const motherRange = cfg.heightScoring.motherRanges.find(
-            r => family.mother >= r.min && family.mother <= r.max
-        );
-        score += motherRange ? motherRange.score : 0;
-    }
-
-    // 祖辈身高加分 - 假设前提：男性170+、女性160+算超标
-    const grandparentHeights = [
-        { height: family.grandpa, standard: 170 },
-        { height: family.wgrandpa, standard: 170 },
-        { height: family.grandma, standard: 160 },
-        { height: family.wgrandma, standard: 160 }
-    ];
-
-    grandparentHeights.forEach(({ height, standard }) => {
-        if (height && height > standard) {
-            score += (height - standard) * cfg.heightScoring.grandparentBonus;
-        }
-    });
-
-    return score;
-}
-
-// 父母运动基因得分
-function calculateParentSportsScore(parents: ParentInfo, cfg: ScoringConfig): number {
-    let score = 0;
-
-    // 父亲运动经历得分
-    if (parents.father.sportExp) {
-        score += cfg.parentSportExpScores[parents.father.sportExp] || 0;
-    }
-
-    // 母亲运动经历得分
-    if (parents.mother.sportExp) {
-        score += cfg.parentSportExpScores[parents.mother.sportExp] || 0;
-    }
-
-    // 父母运动特质得分
-    const fatherTraits = parents.father.traits || [];
-    const motherTraits = parents.mother.traits || [];
-    const allTraits = [...fatherTraits, ...motherTraits];
-
-    allTraits.forEach(trait => {
-        score += cfg.personalityTraitScores[trait] || 0;
-    });
-
-    return score;
-}
-
-// 基础技能得分
-function calculateBasicSkillsScore(basicSkills: BasicSkills, cfg: ScoringConfig): number {
-    const skills: (keyof BasicSkills)[] = ['run', 'jump', 'throw', 'climb', 'balance'];
-    let totalScore = 0;
-
-    skills.forEach(skill => {
-        if (basicSkills[skill]) {
-            totalScore += cfg.skillLevelScores[basicSkills[skill]] || 0;
-        }
-    });
-
-    return totalScore;
-}
-
-// 兴趣广度得分
-function calculateInterestsScore(interests: string[], cfg: ScoringConfig): number {
-    // 兴趣项目数量得分，每个兴趣2分，上限25分
-    return Math.min((interests || []).length * 2, 25);
-}
-
-// 水上项目得分
-function calculateAquaticScore(aquatic: SpecialtyInfo['aquatic'], interests: string[], cfg: ScoringConfig): number {
-    let score = 0;
-
-    // 基础接触分
-    if (aquatic.hasContact) {
-        score += cfg.specialtyScoring.aquatic.hasContactBonus;
-    }
-
-    // 态度得分
-    if (aquatic.attitude) {
-        score += cfg.waterAttitudeScores[aquatic.attitude] || 0;
-    }
-
-    // 技能得分
-    const skillCount = (aquatic.skills || []).length;
-    score += skillCount * 5; // 每项技能5分
-
-    // 年龄加分 - 6岁前接触额外加分
-    if (aquatic.startAge && aquatic.startAge < 6) {
-        score += (6 - aquatic.startAge) * cfg.specialtyScoring.aquatic.ageFactorBonus;
-    }
-
-    // 学习状态加分
-    if (aquatic.learningStatus) {
-        score += cfg.specialtyScoring.aquatic.learningStatusBonus[aquatic.learningStatus] || 0;
-    }
-
-    // 兴趣匹配加分
-    if (interests && interests.includes('游泳')) {
-        score += 15;
-    }
-
-    return score;
-}
-
-// 球类项目得分
-function calculateBallScore(ballSkills: string[], interests: string[], cfg: ScoringConfig): number {
-    let score = 0;
-
-    // 技能得分
-    score += (ballSkills || []).length * cfg.specialtyScoring.ball.skillCount;
-
-    // 兴趣匹配加分
-    const ballInterests = (interests || []).filter(interest =>
-        ['篮球', '足球', '网球', '羽毛球', '其他球类'].includes(interest)
-    );
-
-    if (ballInterests.length > 0) {
-        score += cfg.specialtyScoring.ball.interestBonus;
-    }
-
-    return score;
-}
-
-// 田径项目得分  
-function calculateTrackScore(trackSkills: string[], basicSkills: BasicSkills, interests: string[], cfg: ScoringConfig): number {
-    let score = 0;
-
-    // 基础技能相关性加分（跑、跳、投掷）
-    const relevantSkills: (keyof BasicSkills)[] = ['run', 'jump', 'throw'];
-    let relevantScoreSum = 0;
-    relevantSkills.forEach(skill => {
-        if (basicSkills[skill]) {
-            relevantScoreSum += cfg.skillLevelScores[basicSkills[skill]] || 0;
-        }
-    });
-
-    score += (relevantScoreSum / relevantSkills.length) * cfg.specialtyScoring.track.basicSkillWeight;
-
-    // 兴趣匹配加分
-    if (interests && interests.includes('田径项目')) {
-        score += cfg.specialtyScoring.track.interestBonus;
-    }
-
-    // 具体技能得分
-    score += (trackSkills || []).length * 8; // 每项田径技能8分
-
-    return score;
-}
-
-// 技巧项目得分
-function calculateTechScore(techSkills: string[], highlights: string[], parents: ParentInfo, cfg: ScoringConfig): number {
-    let score = 0;
-
-    // 基础技能得分
-    score += (techSkills || []).length * 10; // 每项技巧10分
-
-    // 相关突出能力加分
-    const relevantHighlights = ['协调性', '平衡能力', '柔韧度', '节奏感'];
-    relevantHighlights.forEach(highlight => {
-        if (highlights && highlights.includes(highlight)) {
-            switch (highlight) {
-                case '协调性':
-                    score += cfg.specialtyScoring.tech.coordinationBonus;
-                    break;
-                case '平衡能力':
-                    score += cfg.specialtyScoring.tech.balanceBonus;
-                    break;
-                case '柔韧度':
-                    score += cfg.specialtyScoring.tech.flexibilityBonus;
-                    break;
-                case '节奏感':
-                    score += 10; // 节奏感加10分
-                    break;
-            }
-        }
-    });
-
-    // 父母相关特质遗传加分
-    const fatherTraits = parents.father.traits || [];
-    const motherTraits = parents.mother.traits || [];
-    const allParentTraits = [...fatherTraits, ...motherTraits];
-    const relevantTraits = ['协调性强', '平衡感好', '柔韧性好'];
-
-    relevantTraits.forEach(trait => {
-        if (allParentTraits.includes(trait)) {
-            score += 5; // 遗传特质每项加5分
-        }
-    });
-
-    return score;
-}
-
-// 身体优势得分
-function calculateStrengthsScore(strengths: string[], cfg: ScoringConfig): number {
-    // 每项身体优势10分
-    return (strengths || []).length * 10;
-}
-
-// 健康状况得分（负分项）
-function calculateHealthScore(health: PhysicalInfo['health'], cfg: ScoringConfig): number {
-    let penalty = 0;
-
-    // 特殊疾病扣分
-    if (health.hasSpecialCondition) {
-        penalty -= 10;
-    }
-
-    // 影响游泳的健康问题扣分
-    const concerns = health.swimConcerns || [];
-    penalty -= concerns.length * 2; // 每项健康问题扣2分
-
-    // 近视扣分
-    if (health.myopia && health.myopia > 200) {
-        penalty -= Math.min((health.myopia - 200) / 100, 5); // 200度以上开始扣分，最多扣5分
-    }
-
-    return penalty;
-}
-
-// 性格特质得分
-function calculateTraitsScore(traits: string[], cfg: ScoringConfig): number {
-    let score = 0;
-
-    (traits || []).forEach(trait => {
-        score += cfg.personalityTraitScores[trait] || 0;
-    });
-
-    return score;
-}
-
-// === 维度总分计算（应用上限控制）===
-
-export function calculateDimensionScores(details: DetailedScores, cfg: ScoringConfig): DimensionScores {
-    const genetic = Math.min(
-        details.genetic.heightGenes + details.genetic.parentSports,
-        cfg.limits.genetic.maxTotal
-    );
-
-    const current = Math.min(
-        details.current.basicSkills + details.current.frequency + details.current.interests,
-        cfg.limits.current.maxTotal
-    );
-
-    // 专项取最高分，不累加
-    const specialty = Math.min(
-        Math.max(
-            details.specialty.aquatic,
-            details.specialty.ball,
-            details.specialty.track,
-            details.specialty.tech
-        ),
-        cfg.limits.specialty.maxTotal
-    );
-
-    const physical = Math.min(
-        details.physical.bodyType + details.physical.strengths + details.physical.health,
-        cfg.limits.physical.maxTotal
-    );
-
-    const psychology = Math.min(
-        details.psychology.traits + details.psychology.resilience + details.psychology.teamwork,
-        cfg.limits.psychology.maxTotal
-    );
-
-    return {
-        genetic: Math.max(0, genetic), // 确保非负
-        current: Math.max(0, current),
-        specialty: Math.max(0, specialty),
-        physical: Math.max(0, physical),
-        psychology: Math.max(0, psychology)
-    };
-}
-
-// === 综合得分计算 ===
-
-export function calculateOverallScore(scores: DimensionScores, cfg: ScoringConfig): number {
-    const overall =
-        scores.genetic * cfg.weights.genetic +
-        scores.current * cfg.weights.current +
-        scores.specialty * cfg.weights.specialty +
-        scores.physical * cfg.weights.physical +
-        scores.psychology * cfg.weights.psychology;
-
-    return Math.round(Math.max(0, Math.min(100, overall))); // 限制在0-100范围内，四舍五入
-}
-
-// === 路径等级判定 ===
-
-export function determinePathway(overall: number, cfg: ScoringConfig): PathwayLevel {
-    const thresholds = cfg.pathwayThresholds;
-
-    if (overall >= thresholds.elite.min) return 'elite';
-    if (overall >= thresholds.competitive.min) return 'competitive';
-    if (overall >= thresholds.recreational.min) return 'recreational';
-    return 'hobby';
-}
-
-// === 项目推荐 ===
-
-export function recommendSports(input: AssessmentInput, scores: DimensionScores, details: DetailedScores, cfg: ScoringConfig): SportType[] {
-    const recommendations: SportType[] = [];
-
-    // 检查各专项得分和相关特质
-    const specialtyScores = details.specialty;
-    const highlights = input.observed.highlights || [];
-    const fatherTraits = input.parents.father.traits || [];
-    const motherTraits = input.parents.mother.traits || [];
-    const traits = [...fatherTraits, ...motherTraits];
-
-    // 水上项目推荐
-    if (specialtyScores.aquatic >= cfg.sportRecommendations.aquatic.minScore) {
-        const hasRequiredTraits = cfg.sportRecommendations.aquatic.requiredTraits.every(trait =>
-            highlights.includes(trait)
-        );
-        if (hasRequiredTraits || specialtyScores.aquatic >= 70) { // 高分可忽略特质要求
-            recommendations.push('aquatic');
-        }
-    }
-
-    // 球类项目推荐
-    if (specialtyScores.ball >= cfg.sportRecommendations.ball_sports.minScore) {
-        const hasRequiredTraits = cfg.sportRecommendations.ball_sports.requiredTraits.some(trait =>
-            highlights.includes(trait) || traits.includes(trait)
-        );
-        if (hasRequiredTraits || specialtyScores.ball >= 65) {
-            recommendations.push('ball_sports');
-        }
-    }
-
-    // 田径项目推荐
-    if (specialtyScores.track >= cfg.sportRecommendations.track_field.minScore) {
-        const hasRequiredTraits = cfg.sportRecommendations.track_field.requiredTraits.some(trait =>
-            highlights.includes(trait)
-        );
-        if (hasRequiredTraits || specialtyScores.track >= 60) {
-            recommendations.push('track_field');
-        }
-    }
-
-    // 技巧项目推荐
-    if (specialtyScores.tech >= cfg.sportRecommendations.technical.minScore) {
-        const hasRequiredTraits = cfg.sportRecommendations.technical.requiredTraits.every(trait =>
-            highlights.includes(trait)
-        );
-        if (hasRequiredTraits || specialtyScores.tech >= 70) {
-            recommendations.push('technical');
-        }
-    }
-
-    // 如果没有明显专项推荐，根据综合得分给出通用建议
-    if (recommendations.length === 0) {
-        if (scores.overall >= 60) {
-            // 综合能力较好，推荐最高得分的专项
-            const maxSpecialty = Math.max(
-                specialtyScores.aquatic,
-                specialtyScores.ball,
-                specialtyScores.track,
-                specialtyScores.tech
-            );
-
-            if (maxSpecialty === specialtyScores.aquatic) recommendations.push('aquatic');
-            else if (maxSpecialty === specialtyScores.ball) recommendations.push('ball_sports');
-            else if (maxSpecialty === specialtyScores.track) recommendations.push('track_field');
-            else recommendations.push('technical');
-        }
-    }
-
-    return recommendations;
-}
-
-// === 建议生成 ===
-
-export function generateRecommendations(scores: DimensionScores, pathway: PathwayLevel, input: AssessmentInput, cfg: ScoringConfig): string[] {
-    const recommendations: string[] = [];
-
-    // 各维度建议
-    const dimensionAdvice = {
-        genetic: getScoreLevel(scores.genetic),
-        current: getScoreLevel(scores.current),
-        specialty: getScoreLevel(scores.specialty),
-        physical: getScoreLevel(scores.physical),
-        psychology: getScoreLevel(scores.psychology)
-    };
-
-    // 添加各维度具体建议
-    Object.entries(dimensionAdvice).forEach(([dimension, level]) => {
-        const templates = cfg.adviceTemplates[dimension];
-        if (templates && templates[level] && templates[level].length > 0) {
-            recommendations.push(templates[level][0]); // 取第一条建议
-        }
-    });
-
-    // 添加路径建议
-    const pathwayAdvice = cfg.adviceTemplates.pathway[pathway];
-    if (pathwayAdvice && pathwayAdvice.length > 0) {
-        recommendations.push(pathwayAdvice[0]);
-    }
-
-    // 待确认点：根据具体情况添加定制化建议
-    // 假设前提：年龄小于5岁时建议以兴趣培养为主
-    if (input.child.age < 5) {
-        recommendations.push('年龄较小，建议以游戏化运动和兴趣培养为主，避免过早专业化训练');
-    }
-
-    // 待确认点：根据家庭支持条件给出建议
-    if (input.goals.support.budget === '有限') {
-        recommendations.push('考虑到家庭经济情况，建议选择成本相对较低的运动项目，如跑步、游泳等');
-    }
-
-    return recommendations;
-}
-
-// 辅助函数：得分等级判定
-function getScoreLevel(score: number): string {
-    if (score >= 70) return 'high';
-    if (score >= 40) return 'medium';
-    return 'low';
-}
-
-// === 导出工具函数 ===
-
 /**
- * 格式化评估结果为可读文本
- * @param result - 评估结果
- * @returns 格式化后的文本
+ * 安全检查
  */
-export function formatResult(result: AssessmentResult): string {
-    const pathwayLabels: Record<PathwayLevel, string> = {
-        hobby: '业余爱好级别',
-        recreational: '兴趣培养级别',
-        competitive: '竞技储备级别',
-        elite: '专业发展级别'
-    };
-
-    const sportLabels: Record<SportType, string> = {
-        aquatic: '水上项目',
-        ball_sports: '球类运动',
-        track_field: '田径项目',
-        technical: '技巧项目'
-    };
-
-    const recommendedSports = result.suitableSports.map(sport => sportLabels[sport]).join('、') || '需要进一步观察';
-    const recommendationList = result.recommendations.map((rec, i) => `${i + 1}. ${rec}`).join('\n');
-
-    return `
-运动天赋评估结果报告
-===================
-
-综合得分：${result.overall}分
-发展路径：${pathwayLabels[result.pathway]}
-
-各维度得分：
-- 遗传潜力：${result.scores.genetic}分
-- 当前能力：${result.scores.current}分  
-- 专项技能：${result.scores.specialty}分
-- 身体优势：${result.scores.physical}分
-- 心理特征：${result.scores.psychology}分
-
-推荐项目：${recommendedSports}
-
-专业建议：
-${recommendationList}
-
-评估时间：${new Date(result.timestamp).toLocaleString()}
-  `.trim();
-}
-
-/**
- * 验证输入数据完整性
- * @param input - 输入数据
- * @returns 验证结果和缺失字段
- */
-export function validateInput(input: Partial<AssessmentInput>): { isValid: boolean; missingFields: string[]; warnings: string[] } {
-    const missingFields: string[] = [];
+function checkSafety(safety: SafetyCheck): { passed: boolean; warnings: string[] } {
     const warnings: string[] = [];
 
-    // 必填字段检查
-    if (!input.child || !input.child.name) missingFields.push('child.name');
-    if (!input.child || !input.child.gender) missingFields.push('child.gender');
-    if (!input.child || !input.child.age) missingFields.push('child.age');
-    if (!input.development || !input.development.frequency) missingFields.push('development.frequency');
-
-    // 警告字段检查
-    if (!input.family || (!input.family.father && !input.family.mother)) {
-        warnings.push('缺少父母身高信息，可能影响遗传潜力评估准确性');
+    // 心脏问题是绝对禁止
+    if (safety.heartCondition) {
+        return { passed: false, warnings: ['检测到心脏相关病史，请先咨询医生后再进行运动评估'] };
     }
 
-    if (!input.specialty || !input.specialty.aquatic || !input.specialty.aquatic.hasContact) {
-        warnings.push('缺少游泳接触信息，专项评估可能不够全面');
+    // 其他警告
+    if (safety.asthma) {
+        warnings.push('哮喘患者需注意运动环境，避免冷空气和过敏原');
     }
+
+    if (safety.allergies && safety.allergies.length > 0) {
+        warnings.push('存在过敏史，请在运动时注意环境因素');
+    }
+
+    if (safety.injuries && safety.injuries.length > 0) {
+        warnings.push('有骨骼/关节损伤史，建议进行运动前热身');
+    }
+
+    return { passed: true, warnings };
+}
+
+/**
+ * 计算 Ape Index（臂展优势指数）
+ */
+function calculateApeIndex(child: ChildProfile): number {
+    return child.armSpan - child.height;
+}
+
+/**
+ * 预测成年身高
+ * 使用 FPH (Future Predicted Height) 公式
+ */
+function predictAdultHeight(input: AssessmentInput): { predicted: number; range: [number, number] } {
+    const { father, mother, child } = input;
+
+    // 基础遗传身高 (父母平均身高法)
+    let geneticHeight: number;
+    if (child.gender === 'male') {
+        // 男孩：(父身高 + 母身高 × 1.08) / 2
+        geneticHeight = (father.height + mother.height * 1.08) / 2;
+    } else {
+        // 女孩：(父身高 × 0.923 + 母身高) / 2
+        geneticHeight = (father.height * 0.923 + mother.height) / 2;
+    }
+
+    // 体型调整
+    let typeAdjustment = 0;
+    if (father.bodyType === 'ecto' || mother.bodyType === 'ecto') {
+        typeAdjustment += 2; // 外胚型倾向更高
+    }
+    if (father.bodyType === 'endo' || mother.bodyType === 'endo') {
+        typeAdjustment -= 1;
+    }
+
+    // Ape Index 调整
+    const apeIndex = calculateApeIndex(child);
+    const apeAdjustment = apeIndex > 0 ? Math.min(apeIndex * 0.3, 3) : 0;
+
+    const predicted = Math.round(geneticHeight + typeAdjustment + apeAdjustment);
+    const range: [number, number] = [predicted - 4, predicted + 4];
+
+    return { predicted, range };
+}
+
+/**
+ * 计算五维得分
+ */
+function calculateDimensionScores(input: AssessmentInput): AssessmentResult['scores'] {
+    const { father, mother, traits, child, tests, mindset } = input;
+
+    // 1. 速度得分
+    let speedScore: number;
+    if (!tests.sprintSkipped && tests.sprintTime) {
+        // 有实测数据
+        speedScore = calculateSprintScore(tests.sprintTime);
+    } else {
+        // 用跳远 + 遗传推算
+        const jumpScore = calculateJumpScore(tests.standingJump, child.gender);
+        const geneticBoost = getBodyTypeSpeedBonus(father.bodyType, mother.bodyType);
+        const traitBoost = CONFIG.traitBonus[traits.explosive] || 0;
+        speedScore = jumpScore * 0.6 + geneticBoost + traitBoost;
+    }
+
+    // 2. 爆发力得分
+    const powerScore = calculatePowerScore(tests.standingJump, child.gender, traits.explosive);
+
+    // 3. 协调/灵敏得分
+    const coordinationScore = calculateCoordinationScore(tests, traits.coordination);
+
+    // 4. 遗传潜力得分
+    const geneticScore = calculateGeneticScore(father, mother, traits);
+
+    // 5. 心理韧性得分
+    const mindsetScore = calculateMindsetScore(mindset);
 
     return {
-        isValid: missingFields.length === 0,
-        missingFields,
-        warnings
+        speed: clamp(Math.round(speedScore), 0, 100),
+        power: clamp(Math.round(powerScore), 0, 100),
+        coordination: clamp(Math.round(coordinationScore), 0, 100),
+        genetic: clamp(Math.round(geneticScore), 0, 100),
+        mindset: clamp(Math.round(mindsetScore), 0, 100)
     };
+}
+
+/**
+ * 30米冲刺评分
+ */
+function calculateSprintScore(time: number): number {
+    const { baseline, multiplier } = CONFIG.sprintScoring;
+    // 时间越短越好，基准4.5秒 = 80分
+    const diff = time - baseline;
+    return Math.max(40, 80 - diff * multiplier);
+}
+
+/**
+ * 立定跳远评分
+ */
+function calculateJumpScore(distance: number, gender: 'male' | 'female'): number {
+    const ranges = CONFIG.jumpScoring[gender];
+    for (const range of ranges) {
+        if (distance >= range.min) {
+            return range.score;
+        }
+    }
+    return 40;
+}
+
+/**
+ * 体型对速度的加成
+ */
+function getBodyTypeSpeedBonus(fatherType: BodyType, motherType: BodyType): number {
+    let bonus = 0;
+    if (fatherType === 'meso') bonus += 10;
+    if (motherType === 'meso') bonus += 10;
+    if (fatherType === 'ecto') bonus += 5;
+    if (motherType === 'ecto') bonus += 5;
+    return bonus;
+}
+
+/**
+ * 爆发力得分
+ */
+function calculatePowerScore(jump: number, gender: 'male' | 'female', explosive: TraitLevel): number {
+    const baseScore = calculateJumpScore(jump, gender);
+    const traitBonus = CONFIG.traitBonus[explosive] || 0;
+    return baseScore + traitBonus;
+}
+
+/**
+ * 协调性得分
+ */
+function calculateCoordinationScore(tests: HomeTests, coordination: TraitLevel): number {
+    let baseScore = 60;
+
+    // 闭眼单脚站
+    if (tests.balanceTime) {
+        if (tests.balanceTime >= 30) baseScore = 90;
+        else if (tests.balanceTime >= 20) baseScore = 80;
+        else if (tests.balanceTime >= 10) baseScore = 70;
+        else baseScore = 60;
+    }
+
+    // 快速击打
+    if (tests.tappingCount) {
+        if (tests.tappingCount >= 60) baseScore = Math.max(baseScore, 90);
+        else if (tests.tappingCount >= 50) baseScore = Math.max(baseScore, 80);
+        else if (tests.tappingCount >= 40) baseScore = Math.max(baseScore, 70);
+    }
+
+    // 柔韧性加分
+    if (tests.flexibility > 10) baseScore += 5;
+    else if (tests.flexibility < -5) baseScore -= 5;
+
+    // 遗传特质加分
+    const traitBonus = CONFIG.traitBonus[coordination] || 0;
+
+    return baseScore + traitBonus;
+}
+
+/**
+ * 遗传潜力得分
+ */
+function calculateGeneticScore(father: ParentProfile, mother: ParentProfile, traits: InheritedTraits): number {
+    let score = 50;
+
+    // 父母竞技水平
+    score += CONFIG.athleticLevelBonus[father.athleticLevel] / 2;
+    score += CONFIG.athleticLevelBonus[mother.athleticLevel] / 2;
+
+    // 体型优势
+    if (father.bodyType === 'meso') score += 8;
+    if (mother.bodyType === 'meso') score += 8;
+
+    // 遗传特质
+    score += CONFIG.traitBonus[traits.explosive] / 2;
+    score += CONFIG.traitBonus[traits.endurance] / 2;
+    score += CONFIG.traitBonus[traits.coordination] / 2;
+
+    return score;
+}
+
+/**
+ * 心理韧性得分
+ */
+function calculateMindsetScore(mindset: MindsetProfile): number {
+    const { coachability, resilience, competitiveness } = mindset;
+    // 各项权重：受教性 30%，抗压性 40%，竞争欲 30%
+    const weighted = coachability * 0.3 + resilience * 0.4 + competitiveness * 0.3;
+    // 1-5 分映射到 40-100 分
+    return 40 + weighted * 12;
+}
+
+/**
+ * 计算综合得分
+ */
+function calculateOverallScore(scores: AssessmentResult['scores']): number {
+    // 加权平均：速度 25%，爆发力 25%，协调 15%，遗传 20%，心理 15%
+    const weighted =
+        scores.speed * 0.25 +
+        scores.power * 0.25 +
+        scores.coordination * 0.15 +
+        scores.genetic * 0.20 +
+        scores.mindset * 0.15;
+
+    return Math.round(weighted);
+}
+
+/**
+ * 确定 Tier 等级
+ */
+function determineTier(score: number): { level: TierLevel; label: string } {
+    const { tier1, tier2, tier3 } = CONFIG.tierThresholds;
+
+    if (score >= tier1) return { level: 'tier1', label: 'Tier 1 精英潜力' };
+    if (score >= tier2) return { level: 'tier2', label: 'Tier 2 竞技储备' };
+    if (score >= tier3) return { level: 'tier3', label: 'Tier 3 兴趣培养' };
+    return { level: 'tier4', label: 'Tier 4 基础发展' };
+}
+
+/**
+ * 生成运动推荐
+ */
+function generateRecommendations(
+    scores: AssessmentResult['scores'],
+    apeIndex: number,
+    input: AssessmentInput
+): SportRecommendation[] {
+    const candidates: SportRecommendation[] = [];
+
+    // 臂展优势项目
+    if (apeIndex > 3) {
+        candidates.push({
+            name: '游泳',
+            nameEn: 'Swimming',
+            matchScore: 90 + Math.min(apeIndex, 10),
+            reason: '臂展优势明显，非常适合游泳项目',
+            icon: '🏊'
+        });
+        candidates.push({
+            name: '篮球',
+            nameEn: 'Basketball',
+            matchScore: 85 + Math.min(apeIndex, 8),
+            reason: '臂展优势有助于篮球防守和投篮',
+            icon: '🏀'
+        });
+    }
+
+    // 速度型项目
+    if (scores.speed >= 80) {
+        candidates.push({
+            name: '短跑',
+            nameEn: 'Sprint',
+            matchScore: scores.speed,
+            reason: '速度优势突出，适合短跑项目',
+            icon: '🏃'
+        });
+        candidates.push({
+            name: '足球',
+            nameEn: 'Soccer',
+            matchScore: scores.speed * 0.9,
+            reason: '速度和爆发力适合足球边锋位置',
+            icon: '⚽'
+        });
+    }
+
+    // 爆发力型项目
+    if (scores.power >= 80) {
+        candidates.push({
+            name: '跳远/跳高',
+            nameEn: 'Track & Field Jumps',
+            matchScore: scores.power,
+            reason: '爆发力出色，适合田径跳跃项目',
+            icon: '🦘'
+        });
+    }
+
+    // 协调性项目
+    if (scores.coordination >= 80) {
+        candidates.push({
+            name: '体操',
+            nameEn: 'Gymnastics',
+            matchScore: scores.coordination,
+            reason: '协调性和柔韧性好，适合体操',
+            icon: '🤸'
+        });
+        candidates.push({
+            name: '网球/羽毛球',
+            nameEn: 'Racket Sports',
+            matchScore: scores.coordination * 0.95,
+            reason: '协调性好，适合球拍类运动',
+            icon: '🎾'
+        });
+    }
+
+    // 综合型项目（总是推荐）
+    candidates.push({
+        name: '综合体能训练',
+        nameEn: 'General Fitness',
+        matchScore: 70,
+        reason: '全面发展身体素质，为专项运动打基础',
+        icon: '💪'
+    });
+
+    // 排序并返回前3个
+    candidates.sort((a, b) => b.matchScore - a.matchScore);
+    return candidates.slice(0, 3);
+}
+
+/**
+ * 工具函数：限制数值范围
+ */
+function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}
+
+// ============ 导出工具函数 ============
+
+/**
+ * 格式化结果为可读文本
+ */
+export function formatResult(result: AssessmentResult): string {
+    const recommendations = result.recommendations
+        .map((r, i) => `${i + 1}. ${r.icon} ${r.name} (匹配度: ${Math.round(r.matchScore)}%)`)
+        .join('\n');
+
+    return `
+FutureStars ID 评估报告
+======================
+
+安全状态: ${result.safetyPassed ? '✅ 通过' : '⛔ 未通过'}
+${result.safetyWarnings.length > 0 ? '注意事项: ' + result.safetyWarnings.join('; ') : ''}
+
+核心指标:
+- Ape Index: ${result.apeIndex > 0 ? '+' : ''}${result.apeIndex.toFixed(1)} cm
+- 预测成年身高: ${result.predictedHeight} cm (${result.predictedHeightRange[0]}-${result.predictedHeightRange[1]} cm)
+
+五维评分:
+- 速度: ${result.scores.speed}${result.speedIsProjected ? ' (推算)' : ''}
+- 爆发力: ${result.scores.power}
+- 协调性: ${result.scores.coordination}
+- 遗传潜力: ${result.scores.genetic}
+- 心理韧性: ${result.scores.mindset}
+
+综合评估: ${result.overallScore} 分
+发展等级: ${result.tierLabel}
+
+推荐项目:
+${recommendations}
+
+评估时间: ${new Date(result.timestamp).toLocaleString('zh-CN')}
+    `.trim();
+}
+
+/**
+ * 计算年龄
+ */
+export function calculateAge(birthDate: string): number {
+    const [year, month] = birthDate.split('-').map(Number);
+    const now = new Date();
+    let age = now.getFullYear() - year;
+    if (now.getMonth() + 1 < month) {
+        age--;
+    }
+    return age;
 }
