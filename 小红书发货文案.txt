@@ -13,7 +13,7 @@
 您的专属兑换码：FS-XXXX-XXXX
 （请妥善保存，每个码仅限使用一次）
 
-测评入口：https://october-1030.github.io/Sports/
+测评入口：https://sports-talent-form.vercel.app/
 
 使用步骤：
 1. 点击上方链接
