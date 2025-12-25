@@ -9,6 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- 兑换码库 -->
+    <script src="codes.js"></script>
 
     <style>
         :root {
@@ -168,12 +170,16 @@
 
         /* 步骤页面 */
         .step-page {
-            display: none;
+            display: none !important;
             animation: fadeIn 0.4s ease-out;
         }
 
         .step-page.active {
-            display: block;
+            display: block !important;
+        }
+
+        .step-page.active.verify-page {
+            display: flex !important;
         }
 
         @keyframes fadeIn {
@@ -1117,6 +1123,152 @@
             margin-top: 8px;
         }
 
+        /* ========== 验证码入口页面 ========== */
+        .verify-page {
+            padding: 32px;
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .verify-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(249, 115, 22, 0.3);
+        }
+
+        .verify-icon i {
+            font-size: 36px;
+            color: white;
+        }
+
+        .verify-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--bg-dark);
+            margin-bottom: 12px;
+        }
+
+        .verify-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            max-width: 320px;
+        }
+
+        .verify-input-wrapper {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 16px;
+        }
+
+        .verify-input {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border: 2px solid #e2e8f0;
+            border-radius: var(--radius-md);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .verify-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+        }
+
+        .verify-input.error {
+            border-color: var(--danger);
+            animation: shake 0.5s ease;
+        }
+
+        .verify-input.success {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .verify-btn {
+            width: 100%;
+            max-width: 300px;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .verify-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+        }
+
+        .verify-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .verify-error {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .verify-error.show {
+            display: block;
+        }
+
+        .verify-help {
+            margin-top: 32px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: var(--radius-md);
+            max-width: 320px;
+        }
+
+        .verify-help-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .verify-help-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .verify-help-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
         /* 结果页面 */
         .result-header {
             background: var(--bg-dark);
@@ -1143,6 +1295,12 @@
             font-size: 20px;
             font-weight: 600;
             color: #fbbf24;
+        }
+
+        .result-hint {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 12px;
         }
 
         /* 公众号引导 */
@@ -1654,8 +1812,44 @@
             <!-- 内容区域 -->
             <div class="content">
 
+                <!-- Step verify: 兑换码验证 -->
+                <div class="step-page verify-page active" data-step="verify">
+                    <div class="verify-icon">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <h1 class="verify-title">输入兑换码</h1>
+                    <p class="verify-desc">请输入您购买时收到的专属兑换码，开启专业运动天赋评估</p>
+
+                    <div class="verify-input-wrapper">
+                        <input
+                            type="text"
+                            class="verify-input"
+                            id="code-input"
+                            placeholder="FS-XXXX-XXXX"
+                            maxlength="12"
+                            oninput="formatCodeInput(this)"
+                            onkeypress="if(event.key === 'Enter') verifyCode()"
+                        >
+                    </div>
+
+                    <button class="verify-btn" onclick="verifyCode()">
+                        <i class="fas fa-unlock"></i> 验证并开始
+                    </button>
+
+                    <div class="verify-error" id="verify-error">
+                        兑换码无效或已被使用，请检查后重试
+                    </div>
+
+                    <div class="verify-help">
+                        <div class="verify-help-title">还没有兑换码？</div>
+                        <div class="verify-help-text">
+                            请在小红书搜索「橙风破浪」购买专业评估服务，购买后将自动收到兑换码。
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Step 0: 首页 Landing Page -->
-                <div class="step-page landing-page active" data-step="0">
+                <div class="step-page landing-page" data-step="0">
                     <div class="decorative-circle"></div>
 
                     <div class="landing-header">
@@ -2260,9 +2454,10 @@
                 <!-- 结果页: 公众号引导 -->
                 <div class="step-page" data-step="result">
                     <div class="result-header">
-                        <div class="result-title">评估已提交</div>
+                        <div class="result-title">初步评估</div>
                         <div class="result-score" id="result-score">--</div>
                         <div class="result-level" id="result-level">天赋潜力分析中...</div>
+                        <div class="result-hint">详细五维分析请关注公众号获取</div>
                     </div>
 
                     <div class="qrcode-card">
@@ -2270,7 +2465,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <h3 class="qrcode-title">评估提交成功！</h3>
-                        <p class="qrcode-desc">请扫码关注公众号，获取完整专业报告</p>
+                        <p class="qrcode-desc">扫码关注公众号，获取专业五维分析报告</p>
 
                         <div class="qrcode-image-wrapper">
                             <img src="images/qrcode.png" alt="公众号二维码" class="qrcode-image">
@@ -2344,8 +2539,86 @@
     </div>
 
     <script>
+        // ============ 兑换码验证系统 ============
+        const USED_CODES_KEY = 'futurestars_used_codes';
+
+        // 获取已使用的兑换码
+        function getUsedCodes() {
+            const stored = localStorage.getItem(USED_CODES_KEY);
+            return stored ? JSON.parse(stored) : [];
+        }
+
+        // 标记兑换码为已使用
+        function markCodeAsUsed(code) {
+            const usedCodes = getUsedCodes();
+            if (!usedCodes.includes(code)) {
+                usedCodes.push(code);
+                localStorage.setItem(USED_CODES_KEY, JSON.stringify(usedCodes));
+            }
+        }
+
+        // 格式化输入（自动添加横线）
+        function formatCodeInput(input) {
+            let value = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (value.length > 2) {
+                value = value.slice(0, 2) + '-' + value.slice(2);
+            }
+            if (value.length > 7) {
+                value = value.slice(0, 7) + '-' + value.slice(7);
+            }
+            input.value = value.slice(0, 12);
+        }
+
+        // 验证兑换码
+        function verifyCode() {
+            const input = document.getElementById('code-input');
+            const errorDiv = document.getElementById('verify-error');
+            const code = input.value.toUpperCase().trim();
+
+            // 检查格式
+            if (!/^FS-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(code)) {
+                input.classList.add('error');
+                errorDiv.textContent = '兑换码格式不正确，请检查后重试';
+                errorDiv.classList.add('show');
+                setTimeout(() => input.classList.remove('error'), 500);
+                return;
+            }
+
+            // 检查是否有效
+            if (!VALID_CODES.includes(code)) {
+                input.classList.add('error');
+                errorDiv.textContent = '兑换码无效，请检查后重试';
+                errorDiv.classList.add('show');
+                setTimeout(() => input.classList.remove('error'), 500);
+                return;
+            }
+
+            // 检查是否已使用
+            if (getUsedCodes().includes(code)) {
+                input.classList.add('error');
+                errorDiv.textContent = '此兑换码已被使用';
+                errorDiv.classList.add('show');
+                setTimeout(() => input.classList.remove('error'), 500);
+                return;
+            }
+
+            // 验证成功
+            input.classList.add('success');
+            errorDiv.classList.remove('show');
+            markCodeAsUsed(code);
+
+            // 保存当前使用的兑换码到 formData
+            formData.redeemCode = code;
+
+            // 延迟跳转，显示成功状态
+            setTimeout(() => {
+                setStep(0); // 跳转到 landing page
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // 滚动到顶部
+            }, 500);
+        }
+
         // ============ 全局状态 ============
-        let currentStep = 0;  // 从首页开始
+        let currentStep = 'verify';  // 从验证页开始
         const totalSteps = 5;
 
         // ============ 首页启动 ============
@@ -2401,26 +2674,31 @@
                 targetPage.classList.add('active');
             }
 
-            // 处理首页模式（隐藏/显示进度条）
+            // 处理首页模式和验证页模式（隐藏/显示进度条）
             const header = document.getElementById('main-header');
-            if (step === 0) {
+            if (step === 0 || step === 'verify') {
                 header.classList.add('landing-mode');
             } else {
                 header.classList.remove('landing-mode');
             }
 
-            // 更新进度条
-            document.querySelectorAll('.progress-dot').forEach((dot, index) => {
-                dot.classList.remove('active', 'completed');
-                if (index + 1 < step) {
-                    dot.classList.add('completed');
-                } else if (index + 1 === step) {
-                    dot.classList.add('active');
-                }
-            });
+            // 更新进度条（仅对数字步骤有效）
+            if (typeof step === 'number' && step > 0) {
+                document.querySelectorAll('.progress-dot').forEach((dot, index) => {
+                    dot.classList.remove('active', 'completed');
+                    if (index + 1 < step) {
+                        dot.classList.add('completed');
+                    } else if (index + 1 === step) {
+                        dot.classList.add('active');
+                    }
+                });
+            }
 
             currentStep = step;
             updateNavButtons();
+
+            // 切换页面时滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateNavButtons() {
@@ -2428,8 +2706,8 @@
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
 
-            // 首页时隐藏整个导航栏
-            if (currentStep === 0) {
+            // 首页和验证页时隐藏整个导航栏
+            if (currentStep === 0 || currentStep === 'verify') {
                 footer.classList.add('hidden');
                 return;
             } else {
