@@ -17,3 +17,9 @@ coverage/
 # 构建输出
 dist/
 build/
+
+# 敏感文件 - 兑换码库，不进 repo
+codes.json
+codes.js
+redemption-codes.csv
+public/codes.js
