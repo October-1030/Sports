@@ -45,6 +45,12 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ success: false, message: '方法不允许' })
 
+  // 检查环境变量
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('Missing env vars:', { SUPABASE_URL: !!SUPABASE_URL, KEY: !!SUPABASE_SERVICE_ROLE_KEY })
+    return res.status(500).json({ success: false, message: '服务器配置错误：缺少环境变量' })
+  }
+
   // IP 限流
   const clientIP = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown'
   if (!checkRateLimit(clientIP)) {
