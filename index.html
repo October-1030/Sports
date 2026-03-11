@@ -9,8 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <!-- 兑换码库 -->
-    <script src="codes.js"></script>
+    <!-- 兑换码库已迁移至后端 API，codes.js 不再需要 -->
 
     <style>
         :root {
@@ -2539,23 +2538,8 @@
     </div>
 
     <script>
-        // ============ 兑换码验证系统 ============
-        const USED_CODES_KEY = 'futurestars_used_codes';
-
-        // 获取已使用的兑换码
-        function getUsedCodes() {
-            const stored = localStorage.getItem(USED_CODES_KEY);
-            return stored ? JSON.parse(stored) : [];
-        }
-
-        // 标记兑换码为已使用
-        function markCodeAsUsed(code) {
-            const usedCodes = getUsedCodes();
-            if (!usedCodes.includes(code)) {
-                usedCodes.push(code);
-                localStorage.setItem(USED_CODES_KEY, JSON.stringify(usedCodes));
-            }
-        }
+        // ============ 兑换码验证系统（后端 API 版本）============
+        const VERIFY_API = 'https://sports-talent-form.vercel.app/api/verify-code';
 
         // 格式化输入（自动添加横线）
         function formatCodeInput(input) {
@@ -2569,10 +2553,11 @@
             input.value = value.slice(0, 12);
         }
 
-        // 验证兑换码
-        function verifyCode() {
+        // 验证兑换码（调用后端 API）
+        async function verifyCode() {
             const input = document.getElementById('code-input');
             const errorDiv = document.getElementById('verify-error');
+            const btn = document.querySelector('.verify-btn');
             const code = input.value.toUpperCase().trim();
 
             // 检查格式
@@ -2584,37 +2569,45 @@
                 return;
             }
 
-            // 检查是否有效
-            if (!VALID_CODES.includes(code)) {
-                input.classList.add('error');
-                errorDiv.textContent = '兑换码无效，请检查后重试';
-                errorDiv.classList.add('show');
-                setTimeout(() => input.classList.remove('error'), 500);
-                return;
-            }
-
-            // 检查是否已使用
-            if (getUsedCodes().includes(code)) {
-                input.classList.add('error');
-                errorDiv.textContent = '此兑换码已被使用';
-                errorDiv.classList.add('show');
-                setTimeout(() => input.classList.remove('error'), 500);
-                return;
-            }
-
-            // 验证成功
-            input.classList.add('success');
+            // 禁用按钮，防止重复提交
+            btn.disabled = true;
+            btn.textContent = '验证中...';
             errorDiv.classList.remove('show');
-            markCodeAsUsed(code);
 
-            // 保存当前使用的兑换码到 formData
-            formData.redeemCode = code;
+            try {
+                const res = await fetch(VERIFY_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
 
-            // 延迟跳转，显示成功状态
-            setTimeout(() => {
-                setStep(0); // 跳转到 landing page
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // 滚动到顶部
-            }, 500);
+                if (data.success) {
+                    // 验证成功
+                    input.classList.add('success');
+                    formData.redeemCode = code;
+                    setTimeout(() => {
+                        setStep(0);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 500);
+                } else {
+                    // 验证失败，显示后端返回的错误信息
+                    input.classList.add('error');
+                    errorDiv.textContent = data.message || '兑换码无效或已被使用，请检查后重试';
+                    errorDiv.classList.add('show');
+                    setTimeout(() => input.classList.remove('error'), 500);
+                    btn.disabled = false;
+                    btn.textContent = '立即验证';
+                }
+            } catch (err) {
+                // 网络错误
+                input.classList.add('error');
+                errorDiv.textContent = '网络错误，请稍后重试';
+                errorDiv.classList.add('show');
+                setTimeout(() => input.classList.remove('error'), 500);
+                btn.disabled = false;
+                btn.textContent = '立即验证';
+            }
         }
 
         // ============ 全局状态 ============
