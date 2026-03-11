@@ -65,6 +65,12 @@ module.exports = async function handler(req, res) {
 
   const normalizedCode = code.trim().toUpperCase()
 
+  // 永久测试码：直接通过，不标记已用
+  const TEST_CODES = ['FS-0000-0000']
+  if (TEST_CODES.includes(normalizedCode)) {
+    return res.status(200).json({ success: true })
+  }
+
   try {
     // 原子操作：PATCH 只更新 is_used=false 的行
     // PostgreSQL 行锁保证并发安全
